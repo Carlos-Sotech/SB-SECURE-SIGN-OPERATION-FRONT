@@ -143,3 +143,19 @@ frontend/.angular/
 # Archivos markdown (excluir todos los .md excepto README.md)
 *.md
 !README.md
+
+# Archivos tar (imágenes Docker exportadas)
+*.tar
+
+# Archivos de texto (excluir todos los .txt)
+*.txt
+
+# Archivos de entorno (todos los .env)
+*.env
+*.env.*
+env.*
+.env-*
+env-*
+.env_local
+.env-remoto
+docker.env

@@ -114,32 +114,112 @@ Los archivos de producción se generarán en `dist/rutas/`.
 
 ## ⚙️ Configuración
 
-### Variables de Entorno
+### Variables de Entorno (Docker Compose)
 
-El frontend se configura mediante un archivo JavaScript que se carga dinámicamente. Crear `src/assets/env.js` basándose en `src/assets/envtemplate.js`:
+El frontend se configura mediante variables de entorno que se pasan al contenedor Docker. Las siguientes variables están disponibles:
+
+#### Configuración Básica
+
+```yaml
+environment:
+  # URL del API Backend - Formatos disponibles:
+  # 
+  # 1. PROXY NGINX (contenedores Docker en la misma red):
+  #    - Servicio/ruta (ej: sotech-backend/api) -> Puerto 8080 por defecto [RECOMENDADO]
+  #    - Servicio:puerto/ruta (ej: sotech-backend:5000/api) -> Puerto específico
+  #    - Ruta relativa (ej: /api) -> Requiere BACKEND_SERVICE_NAME como fallback
+  #
+  # 2. CONEXIÓN DIRECTA (NO usa proxy nginx):
+  #    - URL externa HTTP (ej: http://192.168.1.58:32703/api)
+  #    - URL externa HTTPS (ej: https://back-sotech.iadesarrollos.com/api)
+  #    - IP con puerto (ej: 192.168.1.58:32703/api) -> Se convierte automáticamente a http://
+  - API_URL=sotech-backend/api          # URL del backend API [REQUERIDO]
+  - WEBSOCKET_URL=ws://127.0.0.1:8000/  # URL del WebSocket
+  - WEBSOCKET_TIMEOUT=3000              # Timeout del WebSocket en ms
+  - FRONTEND_BASE_URL=http://192.168.1.58:4200  # URL base del frontend para enlaces
+```
+
+#### Configuración de Servicios Sotech (SSS, SSLS, OTP)
+
+```yaml
+environment:
+  # Servidor de Firma (SSS)
+  - SOTECH_PROTOCOLO_SSS=http           # Protocolo (http/https)
+  - SOTECH_NOMBRE_SERVIDOR_SSS=192.168.1.58  # IP o hostname del servidor SSS
+  - SOTECH_PUERTO_SSS=32700             # Puerto del servidor SSS
+  - SOTECH_APLICACION_SSS=              # Ruta de la aplicación SSS (opcional)
+  
+  # Servidor de Licencias (SSLS)
+  - SOTECH_PROTOCOLO_SSLS=http          # Protocolo (http/https)
+  - SOTECH_NOMBRE_SERVIDOR_SSLS=192.168.1.58  # IP o hostname del servidor SSLS
+  - SOTECH_PUERTO_SSLS=32701            # Puerto del servidor SSLS
+  
+  # Servidor OTP
+  - SOTECH_PROTOCOLO_OTP=http            # Protocolo (http/https)
+  - SOTECH_NOMBRE_SERVIDOR_OTP=192.168.1.58  # IP o hostname del servidor OTP
+  - SOTECH_PUERTO_OTP=32702             # Puerto del servidor OTP
+  - SOTECH_APLICACION_OTP=              # Ruta de la aplicación OTP (opcional)
+```
+
+#### Ejemplo Completo de Docker Compose
+
+```yaml
+services:
+  rutas-frontend:
+    image: rutas-frontend-local:v2025.11.02.2065
+    container_name: rutas-frontend
+    depends_on:
+      - sotech-backend
+    environment:
+      # API Backend
+      - API_URL=sotech-backend/api
+      - WEBSOCKET_URL=ws://127.0.0.1:8000/
+      - WEBSOCKET_TIMEOUT=3000
+      
+      # Servicios Sotech
+      - SOTECH_PROTOCOLO_SSS=http
+      - SOTECH_NOMBRE_SERVIDOR_SSS=192.168.1.58
+      - SOTECH_PUERTO_SSS=32700
+      - SOTECH_APLICACION_SSS=
+      
+      - SOTECH_PROTOCOLO_SSLS=http
+      - SOTECH_NOMBRE_SERVIDOR_SSLS=192.168.1.58
+      - SOTECH_PUERTO_SSLS=32701
+      
+      - SOTECH_PROTOCOLO_OTP=http
+      - SOTECH_NOMBRE_SERVIDOR_OTP=192.168.1.58
+      - SOTECH_PUERTO_OTP=32702
+      - SOTECH_APLICACION_OTP=
+      
+      # URL base del frontend
+      - FRONTEND_BASE_URL=http://192.168.1.58:4200
+    ports:
+      - "4200:80"
+    networks:
+      - postgres_network
+    restart: unless-stopped
+```
+
+#### Configuración para Desarrollo Local (sin Docker)
+
+El frontend también se puede configurar mediante un archivo JavaScript que se carga dinámicamente. Crear `src/assets/env.js` basándose en `src/assets/envtemplate.js`:
 
 ```javascript
 window['env'] = {
   API_URL: 'http://localhost:8080',
-  ENVIRONMENT: 'development'
-};
-```
-
-#### Configuración para Desarrollo
-
-```javascript
-window['env'] = {
-  API_URL: 'http://localhost:8080',
-  ENVIRONMENT: 'development'
-};
-```
-
-#### Configuración para Producción
-
-```javascript
-window['env'] = {
-  API_URL: 'https://api.tu-dominio.com',
-  ENVIRONMENT: 'production'
+  ENVIRONMENT: 'development',
+  WEBSOCKET_URL: 'ws://127.0.0.1:8000/',
+  WEBSOCKET_TIMEOUT: 3000,
+  SOTECH_PROTOCOLO_SSS: 'http',
+  SOTECH_NOMBRE_SERVIDOR_SSS: '192.168.1.58',
+  SOTECH_PUERTO_SSS: 32700,
+  SOTECH_PROTOCOLO_SSLS: 'http',
+  SOTECH_NOMBRE_SERVIDOR_SSLS: '192.168.1.58',
+  SOTECH_PUERTO_SSLS: 32701,
+  SOTECH_PROTOCOLO_OTP: 'http',
+  SOTECH_NOMBRE_SERVIDOR_OTP: '192.168.1.58',
+  SOTECH_PUERTO_OTP: 32702,
+  FRONTEND_BASE_URL: 'http://localhost:4200'
 };
 ```
 
@@ -150,7 +230,29 @@ También puedes configurar mediante `src/environments/environment.ts`:
 ```typescript
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080'
+  apiUrl: 'http://localhost:8080',
+  websocketUrl: 'ws://127.0.0.1:8000/',
+  websocketTimeout: 3000,
+  sotech: {
+    sss: {
+      protocolo: 'http',
+      nombreServidor: '192.168.1.58',
+      puerto: 32700,
+      aplicacion: ''
+    },
+    ssls: {
+      protocolo: 'http',
+      nombreServidor: '192.168.1.58',
+      puerto: 32701
+    },
+    otp: {
+      protocolo: 'http',
+      nombreServidor: '192.168.1.58',
+      puerto: 32702,
+      aplicacion: ''
+    }
+  },
+  frontendBaseUrl: 'http://localhost:4200'
 };
 ```
 
