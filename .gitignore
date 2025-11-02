@@ -136,8 +136,9 @@ frontend/tmp/
 frontend/out-tsc/
 frontend/.angular/
 
-# Scripts shell (excluir todos los .sh)
+# Scripts shell (excluir todos los .sh excepto entrypoint.sh que es necesario para Docker)
 *.sh
+!entrypoint.sh
 !Dockerfile*
 
 # Archivos markdown (excluir todos los .md excepto README.md)
@@ -159,3 +160,33 @@ env-*
 .env_local
 .env-remoto
 docker.env
+
+# Archivos no típicos de Angular (a mantener solo los esenciales)
+# Mantener: package.json, package-lock.json, angular.json, tsconfig*.json, 
+# .editorconfig, .gitignore, README.md, LICENSE, Dockerfile.frontend, 
+# nginx.conf, entrypoint.sh, update-version.js
+
+# Scripts de deploy y servicios (no necesarios en el repo)
+deploy.js
+serve-prod.js
+serve-prod-win.js
+ecosystem.config.js
+
+# Archivos .NET (no pertenecen al frontend)
+*.cs
+
+# Docker compose de backend (no es para el frontend)
+docker-compose.backend*.yml
+
+# Archivos nginx duplicados o backups
+nginx-backend.conf
+nginx.conf.BACKUP.*
+
+# Scripts de backend
+rebuild-backend.ps1
+
+# Directorio temporal
+temp-backend/
+
+# Archivos de configuración local
+.dockerignore.frontend
