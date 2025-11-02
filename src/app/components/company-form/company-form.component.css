@@ -1,0 +1,61 @@
+/* Es importante deshabilitar el scroll del host del diálogo para que no haya doble scroll */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* El host del diálogo debe ocupar toda la altura del contenedor del diálogo */
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Evita que el header se encoja */
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 0 24px; /* Ajusta el padding para alinear con el contenido */
+}
+
+/* mat-dialog-title ya tiene estilos, pero podemos ajustarlos */
+[mat-dialog-title] {
+  margin: 0;
+  padding: 16px 0;
+}
+
+.close-button {
+  /* Posicionamiento opcional del botón de cierre */
+}
+
+.dialog-content-scrollable {
+  flex-grow: 1; /* Permite que el contenido crezca y ocupe el espacio disponible */
+  overflow-y: auto; /* ¡LA CLAVE! Añade scroll vertical solo cuando es necesario */
+  padding: 20px 24px; /* Espaciado interno para el contenido */
+}
+
+.company-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Espacio entre los campos del formulario */
+}
+
+.full-width {
+  width: 100%;
+}
+
+.dialog-actions-sticky {
+  flex-shrink: 0; /* Evita que las acciones se encojan */
+  border-top: 1px solid rgba(0,0,0,0.12); /* Separador visual */
+  padding: 8px 24px; /* Espaciado para los botones */
+  /* mat-dialog-actions ya tiene `display: flex` y `justify-content: flex-end` por defecto (con align="end") */
+  position: relative; /* Para posicionar el spinner */
+}
+
+.spinner-container {
+  position: absolute; /* Posiciona el spinner relativo a las acciones */
+  left: 24px; /* Lo alinea a la izquierda */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9em;
+  color: rgba(0,0,0,0.6);
+}

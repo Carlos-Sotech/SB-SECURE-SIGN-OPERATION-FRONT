@@ -1,0 +1,359 @@
+<div class="operation-view-container">
+  <h2 mat-dialog-title>
+    <mat-icon>visibility</mat-icon>
+    Ver Operación #{{ operation?.id }}
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onCancel()"
+      style="float: right"
+      aria-label="Cerrar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </h2>
+
+  <div class="view-content">
+    <!-- Información de la operación -->
+    <div class="info-section">
+      <h3>
+        <mat-icon>info</mat-icon>
+        Información de la Operación
+      </h3>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <label>ID:</label>
+          <span>{{ operation?.id }}</span>
+        </div>
+
+        <div class="info-item">
+          <label>Caducidad:</label>
+          <span>{{ operation?.minutesAlive ?? 0 }} horas</span>
+        </div>
+
+        <div class="info-item">
+          <label>Tipo:</label>
+          <span>{{
+            getOperationTypeText(
+              operation?.operationType || operationTypeEnum.LOCAL
+            )
+          }}</span>
+        </div>
+
+        <div class="info-item">
+          <label>Estado:</label>
+          <mat-chip
+            [color]="
+              operation?.status === 'Pendiente'
+                ? 'warn'
+                : operation?.status === 'Lanzada'
+                ? 'accent'
+                : 'primary'
+            "
+            selected
+          >
+            {{ operation?.status }}
+          </mat-chip>
+        </div>
+
+        <div class="info-item">
+          <label>Creado:</label>
+          <span>{{ operation?.createdAt | date : "dd/MM/yyyy HH:mm" }}</span>
+        </div>
+
+        <div class="info-item" *ngIf="operation?.updatedAt">
+          <label>Actualizado:</label>
+          <span>{{ operation?.updatedAt | date : "dd/MM/yyyy HH:mm" }}</span>
+        </div>
+
+        <div class="info-item" *ngIf="operation?.signedAt">
+          <label>Firmado:</label>
+          <span>{{ operation?.signedAt | date : "dd/MM/yyyy HH:mm" }}</span>
+        </div>
+
+        <div class="info-item" *ngIf="operation?.rejectedAt">
+          <label>Rechazado/Cancelado:</label>
+          <span>{{ operation?.rejectedAt | date : "dd/MM/yyyy HH:mm" }}</span>
+        </div>
+
+        <div class="info-item full-width" *ngIf="operation?.descripcionOperacion">
+          <label>Descripción de la Operación:</label>
+          <div class="text-content">{{ operation?.descripcionOperacion }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuración de lectura -->
+    <div class="reading-section" *ngIf="operation?.readingConfirmed">
+      <h3>
+        <mat-icon>visibility</mat-icon>
+        Configuración de Lectura
+      </h3>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Confirmación:</label>
+          <mat-chip color="primary" selected>Habilitada</mat-chip>
+        </div>
+
+        <div class="info-item">
+          <label>Todas las páginas:</label>
+          <mat-chip
+            [color]="operation?.readingAllPages ? 'primary' : 'accent'"
+            selected
+          >
+            {{ operation?.readingAllPages ? "Sí" : "No" }}
+          </mat-chip>
+        </div>
+
+        <div class="info-item full-width" *ngIf="operation?.readingText">
+          <label>Texto de Lectura:</label>
+          <div class="text-content">{{ operation?.readingText }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div class="pdf-section">
+      <h3>
+        <mat-icon>description</mat-icon>
+        Documento PDF
+        <mat-chip *ngIf="operation?.status === operationStatusEnum.COMPLETADA" color="primary" selected style="margin-left: 10px;">
+          <mat-icon>verified</mat-icon>
+          Firmado
+        </mat-chip>
+        <button 
+          *ngIf="operation?.status === operationStatusEnum.COMPLETADA"
+          mat-icon-button 
+          (click)="downloadSignedPdf()"
+          matTooltip="Descargar PDF firmado"
+          style="float: right; margin-top: -8px;">
+          <mat-icon>download</mat-icon>
+        </button>
+
+        
+        <mat-chip *ngIf="(operation?.status === operationStatusEnum.COMPLETADA || operation?.status === operationStatusEnum.RECHAZADA) && hasAuditFile" color="primary" selected style="margin-left: 10px;">
+          <mat-icon>verified</mat-icon>
+          Auditoría
+        </mat-chip>
+        <button 
+          *ngIf="(operation?.status === operationStatusEnum.COMPLETADA || operation?.status === operationStatusEnum.RECHAZADA) && hasAuditFile"
+          mat-icon-button 
+          color="accent"
+          (click)="downloadAuditPdf()"
+          matTooltip="Descargar archivo de auditoría"
+          style="float: right; margin-top: -8px; margin-right: 10px;">
+          <mat-icon>description</mat-icon>
+        </button>
+        
+        <!-- Indicador de carga para auditoría -->
+        <div *ngIf="operation?.status === operationStatusEnum.COMPLETADA && isLoadingAudit" 
+             style="float: right; margin-top: -8px; margin-right: 10px;">
+          <mat-spinner diameter="20"></mat-spinner>
+        </div>
+        
+      </h3>
+
+      <div class="pdf-loading" *ngIf="isLoadingPdf">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span *ngIf="operation?.status === operationStatusEnum.COMPLETADA">Cargando PDF firmado...</span>
+        <span *ngIf="operation?.status !== operationStatusEnum.COMPLETADA">Cargando PDF...</span>
+      </div>
+      
+
+      <div
+        class="pdf-viewer-container"
+        *ngIf="pdfSrc && !isLoadingPdf"
+        #pdfContainer
+      >
+      <div
+    class="pdf-wrapper"
+    
+    (mouseenter)="isOverPdf = true"
+    (mouseleave)="isOverPdf = false"
+    (touchstart)="isOverPdf = true"
+    (touchend)="isOverPdf = false"
+  >
+        <ngx-extended-pdf-viewer
+          [src]="pdfSrc"
+          [height]="'85vh'"
+          [showToolbar]="false"
+          [showSidebarButton]="false"
+          [showFindButton]="false"
+          [showPagingButtons]="false"
+          [showZoomButtons]="false"
+          [showPresentationModeButton]="false"
+          [showPrintButton]="false"
+          [showDownloadButton]="false"
+          [showSecondaryToolbarButton]="false"
+          [showRotateButton]="false"
+          [showHandToolButton]="false"
+          [showSpreadButton]="false"
+          [showPropertiesButton]="false"
+          (pdfLoadingStarted)="isLoadingPdf = true"
+          (pdfLoadingEnded)="onPdfLoaded($event)"
+          (pageRendered)="onPageChange($event)"
+          (error)="onPdfError($event)"
+          class="pdf-viewer"
+        >
+        </ngx-extended-pdf-viewer>
+
+        </div>
+        <canvas #signatureCanvas class="signature-canvas-overlay" *ngIf="shouldShowCanvas()"> </canvas>
+      </div>
+
+      <div class="pdf-no-file" *ngIf="!pdfSrc && !isLoadingPdf">
+        <mat-icon>description</mat-icon>
+        <span>No hay PDF disponible</span>
+      </div>
+    </div>
+
+    <!-- Acuerdos -->
+    <div class="agreements-section" *ngIf="agreements.length > 0">
+      <h3>
+        <mat-icon>description</mat-icon>
+        Acuerdos ({{ agreements.length }})
+      </h3>
+
+      <div class="loading-container" *ngIf="isLoadingAgreements">
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Cargando acuerdos...</span>
+      </div>
+
+      <div class="agreements-list" *ngIf="!isLoadingAgreements">
+        <mat-card *ngFor="let agreement of agreements" class="agreement-card">
+          <mat-card-header>
+            <mat-card-title>Acuerdo #{{ agreement.id }}</mat-card-title>
+            <mat-card-subtitle>
+              <mat-chip
+                [color]="agreement.accepted ? 'primary' : 'warn'"
+                selected
+              >
+                {{ agreement.accepted ? "Aceptado" : "Pendiente" }}
+              </mat-chip>
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="agreement-text">{{ agreement.text }}</p>
+            <div class="agreement-dates" *ngIf="agreement.acceptedAt">
+              <p><strong>Aceptado el:</strong> {{ agreement.acceptedAt | date : "dd/MM/yyyy HH:mm" }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Firmantes -->
+    <div class="parties-section" *ngIf="parties.length > 0">
+      <h3>
+        <mat-icon>people</mat-icon>
+        Firmantes ({{ parties.length }})
+      </h3>
+
+      <div class="loading-container" *ngIf="isLoadingParties">
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Cargando firmantes...</span>
+      </div>
+
+      <div class="parties-list" *ngIf="!isLoadingParties">
+        <mat-card *ngFor="let party of parties" class="party-card">
+          <mat-card-header>
+            <mat-card-title
+              >{{ party.firstName }} {{ party.lastName }}</mat-card-title
+            >
+            <mat-card-subtitle>
+              <mat-chip
+                [color]="party.required ? 'primary' : 'accent'"
+                selected
+              >
+                {{ party.required ? "Requerido" : "Opcional" }}
+              </mat-chip>
+              <mat-chip
+                [color]="getPartyStatusColor(party.status)"
+                selected
+                style="margin-left: 8px"
+              >
+                {{ getPartyStatusText(party.status) }}
+              </mat-chip>
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="party-info">
+              <p><strong>Email:</strong> {{ party.email }}</p>
+              <p>
+                <strong>Teléfono:</strong> {{ party.prefix
+                }}{{ party.phoneNumber }}
+              </p>
+              <p><strong>Página:</strong> {{ party.page }}</p>
+              <p
+                *ngIf="getAreasForParty(party.id).length > 0"
+                class="coordinates-info"
+              >
+                <strong>Área:</strong>
+                <mat-chip color="primary" selected>
+                  X:{{ party.x }}, Y:{{ party.y }}, {{ party.width }}x{{
+                    party.height
+                  }}
+                </mat-chip>
+              </p>
+              <p
+                *ngIf="getAreasForParty(party.id).length === 0"
+                class="no-area-info"
+              >
+                <strong>Área:</strong>
+                <mat-chip color="warn" selected>Sin área asignada</mat-chip>
+              </p>
+              <p>
+                <strong>Voz:</strong>
+                <mat-chip color="primary" selected>
+                  {{ party.voice ? "Habilitada" : "Deshabilitada" }}
+                </mat-chip>
+              </p>
+              <p>
+                <strong>Foto:</strong>
+                <mat-chip color="primary" selected>
+                  {{ party.photo ? "Habilitada" : "Deshabilitada" }}
+                </mat-chip>
+              </p>
+              <p>
+                <strong>Huella digital:</strong>
+                <mat-chip color="primary" selected>
+                  {{ party.fingerPrint ? "Habilitada" : "Deshabilitada" }}
+                </mat-chip>
+              </p>
+
+              <!-- Fechas de eventos -->
+              <div class="party-dates" *ngIf="party.signedAt || party.omittedAt">
+                <h5>Fechas de eventos:</h5>
+                <p *ngIf="party.signedAt">
+                  <strong>Firmado el:</strong> 
+                  <mat-chip color="accent" selected>
+                    {{ party.signedAt | date : "dd/MM/yyyy HH:mm" }}
+                  </mat-chip>
+                </p>
+                <p *ngIf="party.omittedAt">
+                  <strong>Omitido el:</strong> 
+                  <mat-chip color="warn" selected>
+                    {{ party.omittedAt | date : "dd/MM/yyyy HH:mm" }}
+                  </mat-chip>
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="party-texts"
+              *ngIf="party.partyTexts && party.partyTexts.length > 0"
+            >
+              <h5>Textos:</h5>
+              <mat-chip *ngFor="let text of party.partyTexts" class="text-chip">
+                {{ text.text }}
+              </mat-chip>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+</div>

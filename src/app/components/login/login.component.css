@@ -1,0 +1,187 @@
+/* Contenedor externo que centra todo el conjunto */
+.login-outer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  padding: 20px;
+  background-color: #f0f2f5; /* Tu fondo original */
+  box-sizing: border-box;
+}
+
+/* Wrapper que contiene logo y login lado a lado */
+.login-wrapper {
+  display: flex;
+  max-width: 900px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Columna izquierda (logo) */
+.login-logo-column {
+  background-color: #ffffff;
+  width: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  flex-direction: column;
+}
+.logo-text {
+  margin-top: -20px; /* Distancia específica desde el logo */
+  font-size: 1.2rem;
+  font-weight: 500;
+  background-color: white; /* Igual que el formulario */
+  padding: 0.5rem 1rem;
+  border-radius: 0px;
+  /*box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);*/
+  color: #4f4f4f;
+  text-align: center;
+}
+
+
+.login-logo {
+  max-width: 160%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+/* Columna derecha con formulario */
+.login-page-container {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+mat-card-content form {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-card-content form > * {
+  margin-bottom: 16px;
+}
+mat-card-content form > *:last-child {
+  margin-bottom: 0;
+}
+
+mat-card-header {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 24px;
+}
+
+mat-card-title {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.extra-links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.extra-links a {
+  color: var(--mat-primary-main-color);
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.extra-links a:hover {
+  text-decoration: underline;
+}
+
+.error-message-container {
+  text-align: center;
+  padding-top: 16px;
+}
+
+.error-text {
+  color: var(--mat-warn-main-color, #f44336);
+  font-size: 0.9em;
+  margin: 0;
+}
+
+button mat-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 📱 Responsive: apilar logo y login en móvil */
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+  }
+
+  .login-logo-column,
+  .login-page-container {
+    width: 100%;
+  }
+
+  .login-logo-column {
+    padding: 40px 20px;
+  }
+}
+
+/* Estilos para información de versión */
+.version-info {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.version-text {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin: 2px 0;
+  font-family: 'Courier New', monospace;
+}
+
+/* Ocultar iconos nativos del navegador en campos de contraseña */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Para Edge y otros navegadores basados en Chromium */
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+/* Ocultar el icono de mostrar contraseña nativo en Edge */
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+/* Asegurar que solo se muestre nuestro icono personalizado */
+.mat-mdc-form-field input[type="password"]::-ms-reveal {
+  display: none !important;
+}
+
+.mat-mdc-form-field input[type="password"]::-ms-clear {
+  display: none !important;
+}

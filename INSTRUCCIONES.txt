@@ -1,0 +1,169 @@
+========================================
+    SOTECH - INSTRUCCIONES DE INSTALACION
+========================================
+
+PAQUETE SIMPLIFICADO PARA DESPLIEGUE LOCAL
+SISTEMA COMPLETO CON BASE DE DATOS CONFIGURABLE
+
+========================================
+    ARCHIVOS INCLUIDOS
+========================================
+
+IMAGENES DOCKER:
+- postgres-13.tar          (155 MB) - PostgreSQL Database
+- sotech-backend-local.tar (59 MB)  - Backend .NET API
+- rutas-frontend.tar       (34 MB)  - Frontend Angular
+- sotech-web.tar           (81 MB)  - Sotech Web App
+
+SCRIPTS:
+- INSTALAR.bat             (Instalar sistema completo)
+- PROBAR.bat               (Probar funcionamiento)
+
+CONFIGURACION:
+- docker-compose.yml       (Configuracion de servicios con BD configurable)
+
+========================================
+    REQUISITOS
+========================================
+
+1. Docker Desktop instalado y funcionando
+2. Windows 10/11
+3. Puertos libres: 4200, 8080, 8008, 5432
+
+========================================
+    INSTALACION
+========================================
+
+IMPORTANTE: Si has borrado las imagenes y contenedores de Docker,
+este script los recreara completamente desde los archivos TAR.
+
+1. EJECUTAR INSTALACION:
+   - Doble clic en: INSTALAR.bat
+   - El script limpiara Docker y cargara las imagenes
+   - Esperar a que se complete la instalacion (2-3 minutos)
+
+2. PROBAR SISTEMA:
+   - Doble clic en: PROBAR.bat
+   - Verificar que todos los servicios funcionen
+   - Si algun servicio falla, espera unos minutos y vuelve a probar
+
+========================================
+    SERVICIOS DISPONIBLES
+========================================
+
+- Frontend Angular: http://localhost:4200
+- Backend API: http://localhost:8080/swagger
+- Sotech Web App: http://localhost:8008
+- PostgreSQL: localhost:5432
+
+========================================
+    CREDENCIALES
+========================================
+
+USUARIOS CREADOS AUTOMATICAMENTE:
+
+ADMINISTRADOR:
+- Usuario: pabloantoniodel
+- Email: pabloantoniodel@gmail.com
+- Contraseña: Pppp54321
+- Rol: Administrador
+
+SUPERUSUARIO:
+- Usuario: pabloantoniodel@ciudadvirtual.app
+- Email: pabloantoniodel@ciudadvirtual.app
+- Contraseña: Pppp54321
+- Rol: Superusuario
+- Empresa: Pruebas Sotech
+
+USUARIO NORMAL:
+- Usuario: pabloantoniodel@aeepim.com
+- Email: pabloantoniodel@aeepim.com
+- Contraseña: Pppp54321
+- Rol: Usuario
+- Empresa: Pruebas Sotech
+
+USUARIO CARLOS:
+- Usuario: Carlos
+- Email: carlos.valencia@sotechbiometrics.com
+- Contraseña: Pppp54321
+- Rol: Usuario
+- Empresa: Pruebas Sotech
+
+EMPRESA INICIAL:
+- Nombre: Pruebas Sotech
+- CIF: B12345678
+- Dirección: Calle Gran Vía, 123, Madrid
+- Email: info@pruebassotech.es
+
+========================================
+    SOLUCION DE PROBLEMAS
+========================================
+
+SI EL BACKEND NO ARRANCA:
+- Verificar que PostgreSQL este funcionando
+- Revisar logs: docker-compose logs sotech-backend
+
+SI EL FRONTEND NO ARRANCA:
+- Verificar que el backend este funcionando
+- Revisar logs: docker-compose logs rutas-frontend
+
+SI SOTECH WEB NO ARRANCA:
+- Verificar que el frontend este funcionando
+- Revisar logs: docker-compose logs sotech-web
+
+SI POSTGRESQL NO ARRANCA:
+- Verificar que el puerto 5432 este libre
+- Revisar logs: docker-compose logs postgres-db
+
+========================================
+    CONFIGURACION DE BASE DE DATOS EXTERNA
+========================================
+
+Para conectar a un servidor PostgreSQL externo:
+
+1. Editar docker-compose.yml
+2. Cambiar la variable de entorno:
+   ConnectionStrings__DefaultConnection=Host=servidor-externo.com;Database=sotech-inmo;Username=usuario;Password=contraseña;Port=5432
+
+3. Reiniciar el sistema:
+   docker-compose down
+   docker-compose up -d
+
+CONFIGURACION ACTUAL (LOCAL):
+ConnectionStrings__DefaultConnection=Host=postgres-db;Database=sotech-inmo;Username=postgres;Password=1234
+
+========================================
+    COMANDOS UTILES
+========================================
+
+Ver estado de contenedores:
+docker-compose ps
+
+Ver logs:
+docker-compose logs -f
+
+Detener sistema:
+docker-compose down
+
+Reiniciar sistema:
+docker-compose restart
+
+Ver logs de un servicio específico:
+docker-compose logs -f sotech-backend
+docker-compose logs -f rutas-frontend
+docker-compose logs -f sotech-web
+docker-compose logs -f postgres-db
+
+========================================
+    CARACTERISTICAS DEL SISTEMA
+========================================
+
+- Base de datos PostgreSQL con datos iniciales
+- Backend .NET con Swagger API
+- Frontend Angular con configuración local
+- Sotech Web App integrada
+- Usuarios y empresa creados automáticamente
+- Configuración de base de datos flexible
+- Sistema completamente funcional desde el primer arranque
+
+========================================

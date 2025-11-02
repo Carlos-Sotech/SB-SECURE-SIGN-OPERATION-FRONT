@@ -1,0 +1,58 @@
+<div class="login-outer-container">
+  <div class="login-wrapper">
+    <!-- Columna izquierda con logo -->
+    <div class="login-logo-column">
+         <div class="logo-container">
+            <img src="assets/Sotech Biometrics.png" alt="Logo" class="login-logo" />
+            <div class="version-info">
+              <span class="version-text">Frontend: {{ frontendVersion }}</span>
+              <span class="version-text">Backend: {{ backendVersion }}</span>
+            </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha con el login -->
+    <div class="login-page-container">
+      <mat-card class="login-card">
+        <mat-card-header>
+          <mat-card-title>Iniciar Sesión</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Usuario o Email</mat-label>
+              <input matInput placeholder="Tu usuario o email" formControlName="usernameOrEmail" required autocomplete="username">
+              <mat-error *ngIf="fc['usernameOrEmail'].touched && fc['usernameOrEmail'].errors?.['required']">
+                Usuario o email es requerido.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Contraseña</mat-label>
+              <input matInput [type]="hidePassword ? 'password' : 'text'" placeholder="Tu contraseña" formControlName="password" required autocomplete="current-password">
+              <button mat-icon-button matSuffix (click)="togglePasswordVisibility($event)" [attr.aria-label]="'Toggle password visibility'" type="button">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="fc['password'].touched && fc['password'].errors?.['required']">
+                Contraseña es requerida.
+              </mat-error>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid || isLoading" class="full-width">
+              <span *ngIf="!isLoading">Ingresar</span>
+              <mat-spinner *ngIf="isLoading" diameter="24" style="margin: 0 auto;"></mat-spinner>
+            </button>
+          </form>
+
+          <div class="extra-links">
+            <a routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <div *ngIf="errorMessage" class="error-message-container">
+            <p class="error-text">{{ errorMessage }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,122 @@
+/* src/app/components/auth-pages.css (o la ruta que hayas decidido) */
+/* src/app/components/auth-pages.css */
+/* ... (estilos existentes) ... */
+
+.auth-card .checkbox-container {
+  display: flex; /* Para poder alinear el mat-checkbox y su error */
+  flex-direction: column; /* Apila el checkbox y el error si es necesario */
+  margin-bottom: 16px; /* Mismo margen que otros campos */
+}
+
+.auth-card .checkbox-error {
+  font-size: 0.75em; /* Tamaño estándar de mat-error */
+  color: var(--mat-warn-main-color, #f44336); /* Color de error */
+  margin-top: 4px; /* Pequeño espacio desde el checkbox */
+}
+.auth-page-container {
+  display: flex;
+  flex-direction: column; /* Aunque solo hay un hijo directo, es buena práctica */
+  justify-content: center; /* Centra el .auth-card verticalmente */
+  align-items: center;    /* Centra el .auth-card horizontalmente */
+  min-height: 100vh;      /* Ocupa al menos toda la altura de la ventana */
+  padding: 20px;          /* Espacio alrededor del contenido */
+  box-sizing: border-box; /* padding no incrementa el tamaño total */
+  /* background-color: #f0f2f5; */ /* Opcional: un color de fondo suave */
+}
+
+.auth-card {
+  width: 100%;             /* Ocupa el ancho disponible en el contenedor flex */
+  max-width: 450px;        /* Ancho máximo de la tarjeta, ajusta según necesidad */
+  padding: 24px;           /* Espaciado interno de la tarjeta */
+  box-sizing: border-box;
+}
+
+.auth-card mat-card-header {
+  display: flex;
+  justify-content: center; /* Centra el título de la tarjeta */
+  padding-bottom: 24px;    /* Espacio debajo del título */
+  border-bottom: 1px solid rgba(0,0,0,0.08); /* Línea sutil debajo del header */
+  margin-bottom: 24px;     /* Espacio después del header, antes del content */
+}
+
+.auth-card mat-card-title {
+  font-size: 22px;         /* Tamaño del título */
+  font-weight: 500;        /* Peso de la fuente */
+  text-align: center;      /* Asegura que el texto del título esté centrado */
+}
+
+.auth-card mat-card-content {
+  /* No necesita flex aquí si el form ya es flex column */
+}
+
+.auth-card mat-card-content form {
+  display: flex;
+  flex-direction: column; /* Apila los elementos del formulario verticalmente */
+}
+
+.auth-card .full-width {
+  width: 100%;
+}
+
+/* Espaciado entre elementos del formulario (mat-form-field, button) */
+.auth-card mat-card-content form > * {
+    margin-bottom: 18px; /* Ajusta este valor según prefieras */
+}
+/* Quitar margen inferior del último elemento del form para que no haya espacio extra */
+.auth-card mat-card-content form > *:last-child {
+    margin-bottom: 0;
+}
+
+.auth-card .description-text {
+  text-align: center;
+  margin-bottom: 24px;     /* Espacio después del texto descriptivo */
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: rgba(0,0,0,0.65); /* Un gris un poco más oscuro para mejor lectura */
+}
+
+.auth-card .extra-links {
+  text-align: center;
+  margin-top: 24px;        /* Espacio después del formulario/botones, antes de los enlaces */
+}
+
+.auth-card .extra-links a {
+  color: var(--mat-primary-main-color, #3f51b5); /* Usa el color primario del tema */
+  text-decoration: none;
+  font-size: 0.9em;
+  padding: 8px; /* Hace el área clickeable un poco más grande */
+}
+
+.auth-card .extra-links a:hover {
+  text-decoration: underline;
+}
+
+/* Para el mensaje de error si decides ponerlo en el template de la tarjeta */
+.auth-card .error-message-container {
+  text-align: center;
+  padding-top: 16px; /* Espacio desde el contenido de arriba */
+}
+
+.auth-card .error-text { /* Usado también en el reset-password para el mensaje de token inválido */
+  color: var(--mat-warn-main-color, #f44336); /* Color de error de Material */
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.auth-card button mat-spinner {
+  display: inline-block; /* Para que el spinner se alinee bien */
+  vertical-align: middle;
+  /* margin: 0 auto; Ya está en el style inline del mat-spinner */
+}
+
+/* Estilos para el contenedor de botones */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancel-button {
+  margin-top: 8px;
+}

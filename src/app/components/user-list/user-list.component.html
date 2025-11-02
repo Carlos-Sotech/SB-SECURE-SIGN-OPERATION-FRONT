@@ -1,0 +1,604 @@
+<!-- src/app/admin/user-list/user-list.component.html -->
+
+<div class="admin-page-container">
+  <!-- ... (Toolbar y Sidenav Container sin cambios) ... -->
+  <mat-toolbar color="primary" class="admin-toolbar">
+    <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle Sidenav">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>Panel de {{ currentUser?.role === Role.Administrador ? 'Administración' : 'Superusuario' }}</span>
+    <span class="toolbar-spacer"></span>
+    <button mat-flat-button color="accent" class="create-operation-button"
+            *ngIf="currentUser &&  currentUser.role === Role.Superusuario"
+            (click)="openCreateOperationDialog()"
+            style="margin-right: 8px;">
+      <mat-icon>add_task</mat-icon> Nueva Operación
+    </button>
+    <button mat-flat-button color="accent" class="create-user-button"
+            *ngIf="currentUser && currentUser.role === Role.Administrador"
+            routerLink="/register"
+            [queryParams]="{
+              adminAction: 'true'
+            }">
+      <mat-icon>person_add</mat-icon> Crear Usuario
+    </button>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="admin-sidenav-container">
+    <mat-sidenav #drawer mode="side" [opened]="true" class="admin-sidenav">
+      <mat-nav-list>
+        <h3 matSubheader>Gestión</h3>
+        <a mat-list-item (click)="navigateToCompanies()" *ngIf="currentUser?.role === Role.Administrador">
+          <mat-icon matListItemIcon>business</mat-icon>
+          <span matListItemTitle>Empresas</span>
+        </a>
+        <a mat-list-item (click)="navigateToOperations()" *ngIf="currentUser?.role !== Role.Administrador">
+          <mat-icon matListItemIcon>assignment</mat-icon>
+          <span matListItemTitle>Operaciones</span>
+        </a>
+        <a mat-list-item (click)="navigateToUsers()" class="active-nav-item">
+          <mat-icon matListItemIcon>people</mat-icon>
+          <span matListItemTitle>Usuarios</span>
+        </a>
+        <mat-divider></mat-divider>
+        <a mat-list-item (click)="logout()">
+          <mat-icon matListItemIcon>exit_to_app</mat-icon>
+          <span matListItemTitle>Cerrar Sesión</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="admin-sidenav-content">
+      <div class="content-wrapper">
+        <!-- ... (Mensaje de bienvenida) ... -->
+        <div class="welcome-message" *ngIf="currentUser">
+          <p>Bienvenido, <strong>{{ currentUser.username }}</strong> (Rol: {{ currentUser.role }})</p>
+          <p *ngIf="currentUser.role === Role.Superusuario && currentUser.companyName">
+             Gestionando usuarios para la empresa: <strong>{{ currentUser.companyName }}</strong>
+          </p>
+        </div>
+
+        <!-- Pestañas para superusuario -->
+        <mat-tab-group *ngIf="currentUser?.role === Role.Superusuario" class="admin-tabs" 
+                      [(selectedIndex)]="activeTabIndex" 
+                      (selectedIndexChange)="onTabChange($event)">
+          <!-- Pestaña de Usuarios -->
+          <mat-tab label="Usuarios">
+            <mat-card class="users-card">
+              <mat-card-header>
+                <mat-card-title>Lista de Usuarios</mat-card-title>
+                <button mat-icon-button (click)="loadUsers()" matTooltip="Recargar lista">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </mat-card-header>
+              <mat-card-content>
+                  <!-- ... (Spinner, Mensaje de Error, Mensaje de Vacío) ... -->
+                  <div *ngIf="isLoadingUsers" class="spinner-container">
+                    <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+                    <p>Cargando usuarios...</p>
+                  </div>
+
+                  <div *ngIf="!isLoadingUsers && usersError" class="error-message-users">
+                    <mat-icon color="warn">error_outline</mat-icon>
+                    <p>{{ usersError }}</p>
+                    <button mat-stroked-button color="primary" (click)="loadUsers()">Reintentar</button>
+                  </div>
+
+                  <div *ngIf="!isLoadingUsers && !usersError && displayedUsers.length === 0" class="empty-state-users">
+                    <mat-icon class="empty-icon">no_accounts</mat-icon>
+                    <p>No hay usuarios para mostrar.</p>
+                  </div>
+
+                  <!-- Tabla de Usuarios -->
+                  <div class="table-container" *ngIf="!isLoadingUsers && !usersError && displayedUsers.length > 0">
+                    <table mat-table [dataSource]="displayedUsers" class="mat-elevation-z4 users-table">
+
+                      <!-- Username Column -->
+                      <ng-container matColumnDef="username">
+                        <th mat-header-cell *matHeaderCellDef> Usuario </th>
+                        <td mat-cell *matCellDef="let user"> {{user.username}} </td>
+                      </ng-container>
+                      <!-- Email Column -->
+                      <ng-container matColumnDef="email">
+                        <th mat-header-cell *matHeaderCellDef> Email </th>
+                        <td mat-cell *matCellDef="let user"> {{user.email}} </td>
+                      </ng-container>
+                      <!-- Role Column -->
+                      <ng-container matColumnDef="role">
+                        <th mat-header-cell *matHeaderCellDef> Rol </th>
+                        <td mat-cell *matCellDef="let user"> {{user.role}} </td>
+                      </ng-container>
+                      <!-- CompanyName Column -->
+                      <ng-container matColumnDef="companyName">
+                        <th mat-header-cell *matHeaderCellDef> Empresa </th>
+                        <td mat-cell *matCellDef="let user"> {{user.companyName || 'N/A'}} </td>
+                      </ng-container>
+                      <!-- CreatedAt Column -->
+                      <ng-container matColumnDef="createdAt">
+                        <th mat-header-cell *matHeaderCellDef> Registrado </th>
+                        <td mat-cell *matCellDef="let user"> {{user.createdAt | date:'dd/MM/yyyy HH:mm'}} </td>
+                      </ng-container>
+                      <!-- Actions Column -->
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                        <td mat-cell *matCellDef="let user">
+                          <button mat-icon-button color="primary" (click)="editUser(user)" matTooltip="Editar Usuario"
+                                  *ngIf="currentUser && currentUser.role === Role.Administrador">
+                            <mat-icon>edit</mat-icon>
+                          </button>
+            <button mat-icon-button color="warn" (click)="deleteUser(user)" matTooltip="Eliminar Usuario"
+                    *ngIf="currentUser && currentUser.id !== user.id && currentUser.role === Role.Administrador">
+              <mat-icon>delete</mat-icon>
+            </button>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                    </table>
+                  </div>
+              </mat-card-content>
+            </mat-card>
+          </mat-tab>
+
+          <!-- Pestaña de Operaciones -->
+          <mat-tab label="Operaciones de la Empresa">
+            <app-operation-search 
+              (searchChanged)="onSearchChanged($event)"
+              *ngIf="currentUser">
+            </app-operation-search>
+            
+            <mat-card class="operations-card">
+              <mat-card-header>
+                <mat-card-title>
+                  {{ isSearching ? 'Resultados de Búsqueda' : 'Operaciones de ' + currentUser?.companyName }}
+                  <span *ngIf="isSearching">({{ companyOperations.length }})</span>
+                </mat-card-title>
+                <button mat-icon-button (click)="loadCompanyOperations()" matTooltip="Recargar operaciones">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </mat-card-header>
+              <mat-card-content>
+                <!-- Spinner de carga -->
+                <div *ngIf="isLoadingOperations" class="spinner-container">
+                  <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+                  <p>Cargando operaciones...</p>
+                </div>
+
+                <!-- Mensaje de error -->
+                <div *ngIf="!isLoadingOperations && operationsError" class="error-message-operations">
+                  <mat-icon color="warn">error_outline</mat-icon>
+                  <p>{{ operationsError }}</p>
+                  <button mat-stroked-button color="primary" (click)="loadCompanyOperations()">Reintentar</button>
+                </div>
+
+                <!-- Estado vacío -->
+                <div *ngIf="!isLoadingOperations && !operationsError && getDisplayOperations().length === 0 && getDisplayPendingOperations().length === 0" class="empty-state-operations">
+                  <mat-icon class="empty-icon">assignment</mat-icon>
+                  <p>{{ isSearching ? 'No se encontraron operaciones que coincidan con la búsqueda.' : 'No hay operaciones para mostrar.' }}</p>
+                </div>
+
+                <!-- Tabla de Operaciones Pendientes -->
+                <div class="table-container" *ngIf="!isLoadingOperations && !operationsError && getDisplayPendingOperations().length > 0">
+                  <h3>Operaciones Pendientes ({{ getDisplayPendingOperations().length }})</h3>
+                  <table mat-table [dataSource]="getDisplayPendingOperations()" class="mat-elevation-z4 operations-table">
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="id">
+                      <th mat-header-cell *matHeaderCellDef> ID </th>
+                      <td mat-cell *matCellDef="let operation"> {{operation.id}} </td>
+                    </ng-container>
+
+                    <!-- OperationType Column -->
+                    <ng-container matColumnDef="operationType">
+                      <th mat-header-cell *matHeaderCellDef> Tipo </th>
+                      <td mat-cell *matCellDef="let operation">
+                        <mat-chip [color]="getOperationTypeColor(operation.operationType)" selected>
+                          {{ getOperationTypeText(operation.operationType) }}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+
+                    <!-- DescripcionOperacion Column -->
+                    <ng-container matColumnDef="descripcionOperacion">
+                      <th mat-header-cell *matHeaderCellDef> Descripción operación </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{ operation.descripcionOperacion || 'Sin descripción' }}
+                      </td>
+                    </ng-container>
+
+                    <!-- Status Column -->
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef> Estado </th>
+                      <td mat-cell *matCellDef="let operation">
+                        <mat-chip [color]="getStatusColor(operation.status)" selected>
+                          {{ operation.status }}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+
+                    <!-- User Column -->
+                    <ng-container matColumnDef="user">
+                      <th mat-header-cell *matHeaderCellDef> Usuario </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{ getUserName(operation) }}
+                      </td>
+                    </ng-container>
+
+                    <!-- MinutesAlive Column -->
+                    <ng-container matColumnDef="minutesAlive">
+                      <th mat-header-cell *matHeaderCellDef> Caducidad </th>
+                                        <td mat-cell *matCellDef="let operation">
+                    {{ operation.minutesAlive }} horas
+                  </td>
+                    </ng-container>
+
+                    <!-- CreatedAt Column -->
+                    <ng-container matColumnDef="createdAt">
+                      <th mat-header-cell *matHeaderCellDef> Fecha Creación </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{operation.createdAt | date:'dd/MM/yyyy HH:mm'}}
+                      </td>
+                    </ng-container>
+
+                    <!-- Actions Column -->
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef class="actions-header"> Acciones </th>
+                      <td mat-cell *matCellDef="let operation" class="actions-cell">
+                        <button mat-icon-button color="primary" (click)="viewOperation(operation)" matTooltip="Ver Operación">
+                          <mat-icon>visibility</mat-icon>
+                        </button>
+                        <button 
+                          *ngIf="operation.status === 'Pendiente'"
+                          mat-icon-button 
+                          color="accent" 
+                          (click)="launchOperation(operation)" 
+                          matTooltip="Lanzar Operación">
+                          <mat-icon>flight_takeoff</mat-icon>
+                        </button>
+                        <button 
+                          *ngIf="operation.status === 'Pendiente'"
+                          mat-icon-button 
+                          color="primary" 
+                          (click)="editOperation(operation)" 
+                          matTooltip="Editar Operación">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button 
+                          *ngIf="operation.status !== 'Pendiente'"
+                          mat-icon-button 
+                          color="primary" 
+                          (click)="relaunchOperation(operation)" 
+                          matTooltip="Relanzar Operación">
+                          <mat-icon>refresh</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteOperation(operation)" matTooltip="Eliminar Operación">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="operationsDisplayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: operationsDisplayedColumns;"></tr>
+                  </table>
+                </div>
+
+                <!-- Tabla de Otras Operaciones -->
+                <div class="table-container" *ngIf="!isLoadingOperations && !operationsError && getDisplayNonPendingOperations().length > 0">
+                  <h3>Otras Operaciones ({{ getDisplayNonPendingOperations().length }})</h3>
+                  <table mat-table [dataSource]="getDisplayNonPendingOperations()" class="mat-elevation-z4 operations-table">
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="id">
+                      <th mat-header-cell *matHeaderCellDef> ID </th>
+                      <td mat-cell *matCellDef="let operation"> {{operation.id}} </td>
+                    </ng-container>
+
+                    <!-- OperationType Column -->
+                    <ng-container matColumnDef="operationType">
+                      <th mat-header-cell *matHeaderCellDef> Tipo </th>
+                      <td mat-cell *matCellDef="let operation">
+                        <mat-chip [color]="getOperationTypeColor(operation.operationType)" selected>
+                          {{ getOperationTypeText(operation.operationType) }}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+
+                    <!-- DescripcionOperacion Column -->
+                    <ng-container matColumnDef="descripcionOperacion">
+                      <th mat-header-cell *matHeaderCellDef> Descripción operación </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{ operation.descripcionOperacion || 'Sin descripción' }}
+                      </td>
+                    </ng-container>
+
+                    <!-- Status Column -->
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef> Estado </th>
+                      <td mat-cell *matCellDef="let operation">
+                        <mat-chip [color]="getStatusColor(operation.status)" selected>
+                          {{ operation.status }}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+
+                    <!-- User Column -->
+                    <ng-container matColumnDef="user">
+                      <th mat-header-cell *matHeaderCellDef> Usuario </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{ getUserName(operation) }}
+                      </td>
+                    </ng-container>
+
+                    <!-- MinutesAlive Column -->
+                    <ng-container matColumnDef="minutesAlive">
+                      <th mat-header-cell *matHeaderCellDef> Caducidad </th>
+                                        <td mat-cell *matCellDef="let operation">
+                    {{ operation.minutesAlive }} horas
+                  </td>
+                    </ng-container>
+
+                    <!-- CreatedAt Column -->
+                    <ng-container matColumnDef="createdAt">
+                      <th mat-header-cell *matHeaderCellDef> Fecha Creación </th>
+                      <td mat-cell *matCellDef="let operation">
+                        {{operation.createdAt | date:'dd/MM/yyyy HH:mm'}}
+                      </td>
+                    </ng-container>
+
+                    <!-- Actions Column -->
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef class="actions-header"> Acciones </th>
+                      <td mat-cell *matCellDef="let operation" class="actions-cell">
+                        <button mat-icon-button color="primary" (click)="viewOperation(operation)" matTooltip="Ver Operación">
+                          <mat-icon>visibility</mat-icon>
+                        </button>
+                        <button 
+                          *ngIf="operation.status === 'Pendiente'"
+                          mat-icon-button 
+                          color="primary" 
+                          (click)="editOperation(operation)" 
+                          matTooltip="Editar Operación">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button 
+                          *ngIf="operation.status !== 'Pendiente'"
+                          mat-icon-button 
+                          color="primary" 
+                          (click)="relaunchOperation(operation)" 
+                          matTooltip="Relanzar Operación">
+                          <mat-icon>refresh</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteOperation(operation)" matTooltip="Eliminar Operación">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="operationsDisplayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: operationsDisplayedColumns;"></tr>
+                  </table>
+                </div>
+
+                <!-- Paginación -->
+                <mat-paginator 
+                  *ngIf="operationsPagination && getDisplayOperations().length > 0"
+                  [length]="operationsPagination.totalCount"
+                  [pageSize]="currentSearch.pageSize"
+                  [pageSizeOptions]="[10, 20, 50, 100]"
+                  [pageIndex]="currentSearch.page - 1"
+                  (page)="onPageChange($event)"
+                  showFirstLastButtons>
+                </mat-paginator>
+
+                <!-- Información de paginación -->
+                <div class="pagination-info" *ngIf="operationsPagination">
+                  <p>Mostrando {{ getDisplayOperations().length }} de {{ operationsPagination.totalCount }} operaciones</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </mat-tab>
+        </mat-tab-group>
+
+        <!-- Vista normal para administrador -->
+        <mat-card class="users-card" *ngIf="currentUser?.role === Role.Administrador">
+          <mat-card-header>
+            <mat-card-title>Lista de Usuarios</mat-card-title>
+            <button mat-icon-button (click)="loadUsers()" matTooltip="Recargar lista">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+              <!-- ... (Spinner, Mensaje de Error, Mensaje de Vacío) ... -->
+              <div *ngIf="isLoadingUsers" class="spinner-container">
+                <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+                <p>Cargando usuarios...</p>
+              </div>
+
+              <div *ngIf="!isLoadingUsers && usersError" class="error-message-users">
+                <mat-icon color="warn">error_outline</mat-icon>
+                <p>{{ usersError }}</p>
+                <button mat-stroked-button color="primary" (click)="loadUsers()">Reintentar</button>
+              </div>
+
+              <div *ngIf="!isLoadingUsers && !usersError && displayedUsers.length === 0" class="empty-state-users">
+                <mat-icon class="empty-icon">no_accounts</mat-icon>
+                <p>No hay usuarios para mostrar.</p>
+              </div>
+
+              <!-- Tabla de Usuarios -->
+              <div class="table-container" *ngIf="!isLoadingUsers && !usersError && displayedUsers.length > 0">
+                <table mat-table [dataSource]="displayedUsers" class="mat-elevation-z4 users-table">
+
+                  <!-- Username Column -->
+                  <ng-container matColumnDef="username">
+                    <th mat-header-cell *matHeaderCellDef> Usuario </th>
+                    <td mat-cell *matCellDef="let user"> {{user.username}} </td>
+                  </ng-container>
+                  <!-- Email Column -->
+                  <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef> Email </th>
+                    <td mat-cell *matCellDef="let user"> {{user.email}} </td>
+                  </ng-container>
+                  <!-- Role Column -->
+                  <ng-container matColumnDef="role">
+                    <th mat-header-cell *matHeaderCellDef> Rol </th>
+                    <td mat-cell *matCellDef="let user"> {{user.role}} </td>
+                  </ng-container>
+                  <!-- CompanyName Column -->
+                  <ng-container matColumnDef="companyName">
+                    <th mat-header-cell *matHeaderCellDef> Empresa </th>
+                    <td mat-cell *matCellDef="let user"> {{user.companyName || 'N/A'}} </td>
+                  </ng-container>
+                  <!-- CreatedAt Column -->
+                  <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef> Registrado </th>
+                    <td mat-cell *matCellDef="let user"> {{user.createdAt | date:'dd/MM/yyyy HH:mm'}} </td>
+                  </ng-container>
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Acciones </th>
+                    <td mat-cell *matCellDef="let user">
+                      <button mat-icon-button color="primary" (click)="editUser(user)" matTooltip="Editar Usuario"
+                              *ngIf="currentUser && currentUser.role === Role.Administrador">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="deleteUser(user)" matTooltip="Eliminar Usuario"
+                              *ngIf="currentUser && currentUser.id !== user.id && currentUser.role === Role.Administrador">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+              </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+
+<style>
+/* Estilos copiados de operation-list para mantener consistencia */
+
+.operations-table {
+  width: 100%;
+  min-width: 1200px; /* Asegurar que todas las columnas sean visibles */
+}
+
+.operations-table .mat-mdc-header-cell {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.7);
+  padding: 12px 8px;
+}
+
+.operations-table .mat-mdc-cell {
+  font-size: 13px;
+  padding: 8px;
+}
+
+/* Asegurar que la columna de descripción sea visible */
+.operations-table .mat-column-descripcionOperacion {
+  min-width: 200px !important;
+  max-width: 300px;
+  word-wrap: break-word;
+  display: table-cell !important;
+  visibility: visible !important;
+}
+
+.operations-table .mat-mdc-header-cell.mat-column-descripcionOperacion {
+  min-width: 200px !important;
+  display: table-cell !important;
+  visibility: visible !important;
+}
+
+.operations-table .mat-mdc-row:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+
+.actions-header { 
+  text-align: center !important;
+  width: 400px;
+  min-width: 400px;
+}
+
+.actions-cell { 
+  text-align: center !important;
+  width: 400px;
+  min-width: 400px;
+  white-space: nowrap;
+}
+
+.mat-mdc-table .mat-mdc-cell.actions-cell button:not(:last-child),
+.mat-mdc-table .mat-mdc-header-cell.actions-header button:not(:last-child) {
+  margin-right: 8px;
+}
+
+/* Asegurar que los botones estén siempre en línea */
+.actions-cell .mat-mdc-button,
+.actions-cell .mat-mdc-icon-button {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+
+/* Estilos para los iconos dentro de los botones */
+.actions-cell .mat-mdc-icon-button mat-icon {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+}
+
+/* Estilos para el botón de ver operación */
+.actions-cell button[matTooltip="Ver Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Ver Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+/* Estilos para el botón de lanzar operación */
+.actions-cell button[matTooltip="Lanzar Operación"] {
+  color: #ff4081 !important;
+}
+
+.actions-cell button[matTooltip="Lanzar Operación"]:hover {
+  background-color: rgba(255, 64, 129, 0.1) !important;
+}
+
+/* Estilos para el botón de editar */
+.actions-cell button[matTooltip="Editar Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Editar Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+/* Estilos para el botón de eliminar */
+.actions-cell button[matTooltip="Eliminar Operación"] {
+  color: #f44336 !important;
+}
+
+.actions-cell button[matTooltip="Eliminar Operación"]:hover {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+/* Estilos para el botón de relanzar operación */
+.actions-cell button[matTooltip="Relanzar Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Relanzar Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+</style>

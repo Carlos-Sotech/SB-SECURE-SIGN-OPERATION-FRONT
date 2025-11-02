@@ -1,0 +1,88 @@
+<!-- Checkbox para mostrar operaciones caducadas - FUERA del buscador -->
+<div [formGroup]="searchForm" class="expired-checkbox-container" style="margin-bottom: 16px;">
+  <mat-checkbox 
+    formControlName="showExpired"
+    color="primary"
+    (change)="performSearch()">
+    Mostrar operaciones caducadas
+  </mat-checkbox>
+</div>
+
+<mat-card class="search-card">
+  <!-- Header compacto -->
+  <div class="search-header" (click)="toggleSearch()">
+    <div class="header-left">
+      <mat-icon>search</mat-icon>
+      <span class="header-title">Búsqueda</span>
+      <span class="query-length" *ngIf="getSearchQueryLength() > 0">
+        ({{ getSearchQueryLength() }})
+      </span>
+    </div>
+    
+    <div class="header-actions" (click)="$event.stopPropagation()">
+      <button mat-icon-button 
+              (click)="expandAll()" 
+              matTooltip="Expandir"
+              *ngIf="!isExpanded">
+        <mat-icon>expand_more</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              (click)="collapseAll()" 
+              matTooltip="Contraer"
+              *ngIf="isExpanded">
+        <mat-icon>expand_less</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              (click)="clearSearch()" 
+              matTooltip="Limpiar"
+              *ngIf="hasSearchQuery()">
+        <mat-icon>clear_all</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenido expandible -->
+  <div class="search-content" [class.expanded]="isExpanded">
+    <form [formGroup]="searchForm" class="search-form">
+      
+      <div class="search-container">
+        
+        <!-- Búsqueda principal -->
+        <div class="search-section main-search">
+          <div class="search-input-container">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Buscar operaciones...</mat-label>
+              <input matInput 
+                     formControlName="query" 
+                     placeholder="ID, usuario, tipo, estado, empresa, descripción, texto..."
+                     (keypress)="onSearchKeyPress($event)">
+              <mat-icon matSuffix>search</mat-icon>
+              <mat-hint>Busca por ID, usuario, tipo, estado, empresa, descripción de operación o texto</mat-hint>
+            </mat-form-field>
+            
+            <button mat-raised-button 
+                    color="primary" 
+                    (click)="onSearchClick()"
+                    [disabled]="!hasSearchQuery()"
+                    class="search-button">
+              <mat-icon>search</mat-icon>
+              Buscar
+            </button>
+          </div>
+        </div>
+
+        <!-- Resultados de búsqueda activa -->
+        <div class="search-section active-search" *ngIf="hasSearchQuery()">
+          <div class="search-chips">
+            <mat-chip class="search-chip">
+              "{{ searchForm.get('query')?.value }}"
+              <mat-icon matChipRemove (click)="clearSearch()">cancel</mat-icon>
+            </mat-chip>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</mat-card> 

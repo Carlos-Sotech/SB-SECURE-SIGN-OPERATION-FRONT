@@ -1,0 +1,504 @@
+/* Search Card Container */
+.search-card {
+  margin: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.search-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Search Header */
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 40px;
+}
+
+.search-header:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.header-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.query-length {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.header-actions button {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  color: white;
+}
+
+.header-actions button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Search Content */
+.search-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: #fafafa;
+}
+
+.search-content.expanded {
+  max-height: 200px;
+}
+
+/* Search Form */
+.search-form {
+  padding: 8px;
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Search Sections */
+.search-section {
+  background: white;
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Search Section */
+.main-search {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.search-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-field ::ng-deep .mat-mdc-form-field {
+  font-size: 12px;
+}
+
+.search-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.search-field ::ng-deep .mat-mdc-text-field-wrapper {
+  padding: 0 8px;
+  min-height: 36px;
+}
+
+.search-field ::ng-deep .mat-mdc-form-field-infix {
+  padding: 8px 0;
+  min-height: 20px;
+}
+
+.search-field ::ng-deep .mat-mdc-form-field-label {
+  font-size: 11px;
+  top: 8px;
+}
+
+.search-field ::ng-deep .mat-mdc-input-element {
+  font-size: 12px;
+}
+
+.search-button {
+  height: 36px;
+  min-width: 80px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.search-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.search-button mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Expired Checkbox Container */
+.expired-checkbox-container {
+  margin-top: 8px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.expired-checkbox-container mat-checkbox {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Active Search Section */
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.search-chip {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 500;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 11px;
+  height: 24px;
+  transition: all 0.3s ease;
+}
+
+.search-chip:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.search-chip mat-icon {
+  color: white;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .search-card {
+    margin: 4px;
+  }
+  
+  .expired-checkbox-container {
+    margin-top: 6px;
+    padding: 6px 0;
+  }
+  
+  .expired-checkbox-container mat-checkbox {
+    font-size: 11px;
+  }
+  
+  .load-more-container {
+    padding: 16px;
+    margin-top: 12px;
+  }
+  
+  .load-more-trigger {
+    min-height: 50px;
+    gap: 6px;
+  }
+  
+  .load-more-trigger p {
+    font-size: 12px;
+  }
+  
+  .no-more-results {
+    padding: 12px;
+    margin-top: 12px;
+  }
+  
+  .no-more-results p {
+    font-size: 12px;
+  }
+  
+  .search-header {
+    padding: 6px 8px;
+    min-height: 36px;
+  }
+  
+  .header-title {
+    font-size: 12px;
+  }
+  
+  .query-length {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .header-actions button {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+  }
+  
+  .search-form {
+    padding: 6px;
+  }
+  
+  .search-section {
+    padding: 6px;
+  }
+  
+  .search-input-container {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .search-button {
+    width: 100%;
+    height: 32px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-text-field-wrapper {
+    padding: 0 6px;
+    min-height: 32px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-form-field-infix {
+    padding: 6px 0;
+    min-height: 18px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-form-field-label {
+    font-size: 10px;
+    top: 6px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-input-element {
+    font-size: 11px;
+  }
+  
+  .search-chip {
+    font-size: 10px;
+    height: 20px;
+    padding: 2px 8px;
+  }
+  
+  .search-chip mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .search-input-container {
+    gap: 12px;
+  }
+  
+  .search-button {
+    min-width: 100px;
+  }
+}
+
+@media (min-width: 769px) {
+  .search-card {
+    margin: 12px;
+  }
+  
+  .expired-checkbox-container {
+    margin-top: 10px;
+    padding: 10px 0;
+  }
+  
+  .expired-checkbox-container mat-checkbox {
+    font-size: 13px;
+  }
+  
+  .load-more-container {
+    padding: 24px;
+    margin-top: 20px;
+  }
+  
+  .load-more-trigger {
+    min-height: 70px;
+    gap: 10px;
+  }
+  
+  .load-more-trigger p {
+    font-size: 15px;
+  }
+  
+  .no-more-results {
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .no-more-results p {
+    font-size: 15px;
+  }
+  
+  .search-header {
+    padding: 10px 16px;
+    min-height: 44px;
+  }
+  
+  .header-title {
+    font-size: 15px;
+  }
+  
+  .query-length {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+  
+  .header-actions button {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+  
+  .search-form {
+    padding: 12px;
+  }
+  
+  .search-section {
+    padding: 12px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-text-field-wrapper {
+    padding: 0 12px;
+    min-height: 40px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-form-field-infix {
+    padding: 10px 0;
+    min-height: 24px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-form-field-label {
+    font-size: 13px;
+    top: 10px;
+  }
+  
+  .search-field ::ng-deep .mat-mdc-input-element {
+    font-size: 14px;
+  }
+  
+  .search-button {
+    height: 40px;
+    min-width: 120px;
+    font-size: 14px;
+  }
+  
+  .search-button mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .search-chip {
+    font-size: 12px;
+    height: 28px;
+    padding: 6px 16px;
+  }
+  
+  .search-chip mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Animaciones suaves */
+.search-content {
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estados de hover y focus */
+.search-field ::ng-deep .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.search-field ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  background-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Mejoras de accesibilidad */
+.search-header:focus {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+.header-actions button:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Indicadores visuales */
+.search-header[aria-expanded="true"] {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Load More Container Styles */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  margin-top: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #dee2e6;
+}
+
+.load-more-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 60px;
+  justify-content: center;
+}
+
+.load-more-trigger p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.no-more-results {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  margin-top: 16px;
+  background: #e9ecef;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.no-more-results p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  font-style: italic;
+} 

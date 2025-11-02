@@ -1,0 +1,117 @@
+<div class="party-form-container">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ isEditMode ? 'edit' : 'person_add' }}</mat-icon>
+    {{ isEditMode ? 'Editar Firmante' : 'Nuevo Firmante' }}
+    <button mat-icon-button type="button" (click)="onCancel()" style="float: right;" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </h2>
+
+  <div class="form-content-scroll">
+    <form [formGroup]="partyForm" (ngSubmit)="onSubmit()" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="form-section">
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="firstName" placeholder="Nombre">
+            <mat-error *ngIf="partyForm.get('firstName')?.hasError('required')">
+              El nombre es requerido
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Apellido</mat-label>
+            <input matInput formControlName="lastName" placeholder="Apellido">
+            <mat-error *ngIf="partyForm.get('lastName')?.hasError('required')">
+              El apellido es requerido
+            </mat-error>
+            <mat-error *ngIf="partyForm.get('lastName')?.hasError('minlength')">
+              El apellido debe tener al menos 1 caracter
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Prefijo</mat-label>
+            <input matInput formControlName="prefix" placeholder="+34">
+            <mat-error *ngIf="partyForm.get('prefix')?.hasError('required')">
+              El prefijo es requerido
+            </mat-error>
+            <mat-error *ngIf="partyForm.get('prefix')?.hasError('prefixFormat')">
+              El prefijo debe comenzar con '+'
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input matInput 
+                   formControlName="phoneNumber" 
+                   placeholder="123456789" 
+                   (input)="onPhoneNumberInput($event)"
+                   type="tel"
+                   pattern="[0-9]*">
+            <mat-error *ngIf="partyForm.get('phoneNumber')?.hasError('required')">
+              El teléfono es requerido
+            </mat-error>
+            <mat-error *ngIf="partyForm.get('phoneNumber')?.hasError('phoneNumberFormat')">
+              El teléfono solo puede contener números
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="email@ejemplo.com">
+            <mat-error *ngIf="partyForm.get('email')?.hasError('required')">
+              El email es requerido
+            </mat-error>
+            <mat-error *ngIf="partyForm.get('email')?.hasError('email')">
+              El email no es válido
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <div class="checkbox-group">
+            <mat-checkbox formControlName="required">Requerido</mat-checkbox>
+            <mat-checkbox formControlName="voice">Voz</mat-checkbox>
+            <mat-checkbox formControlName="photo">Foto</mat-checkbox>
+            <mat-checkbox formControlName="fingerPrint">Huella Digital</mat-checkbox>
+          </div>
+        </div>
+
+        <!-- Party Texts Section -->
+        <div class="party-texts-section">
+          <h4>Textos del Firmante <span style="color: red;">*</span></h4>
+          <div formArrayName="partyTexts">
+            <div *ngFor="let pt of partyTextsArray.controls; let i = index" [formGroupName]="i" class="party-text-item">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Texto {{i+1}}<span style="color: red;" *ngIf="i === 0"> *</span></mat-label>
+                <textarea matInput formControlName="text" rows="2" placeholder="Texto específico para este firmante"></textarea>
+                <mat-error *ngIf="pt.get('text')?.hasError('required') && i === 0">
+                  El primer texto es obligatorio
+                </mat-error>
+              </mat-form-field>
+              <button mat-icon-button color="warn" type="button" (click)="removePartyText(i)" 
+                      *ngIf="partyTextsArray.length > 1" class="remove-text-btn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+          <button mat-stroked-button color="primary" type="button" (click)="addPartyText()" class="add-text-btn">
+            <mat-icon>add</mat-icon> Añadir texto
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+    <button mat-raised-button color="primary" type="submit"
+            [disabled]="!partyForm.valid || isSubmitting" (click)="onSubmit()">
+      <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+      <span *ngIf="!isSubmitting">{{ isEditMode ? 'Actualizar' : 'Crear' }}</span>
+    </button>
+  </div>
+</div> 

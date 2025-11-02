@@ -1,0 +1,240 @@
+/* Fuente y colores generales */
+@font-face {
+  font-family: 'Segoe UI';
+  src: url('./assets/fonts/segoeuithis.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal !important;
+  font-display: swap; /* Mejora la carga de fuentes en Firefox */
+}
+
+/* Configuración global para Material Icons - Todos los navegadores */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/icons/MaterialIcons-Regular.woff2') format('woff2'),
+       url('./assets/icons/MaterialIcons-Regular.woff') format('woff');
+  font-display: block;
+}
+
+/* Configuración global para iconos de Material */
+.mat-icon {
+  font-family: 'Material Icons' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Configuración específica para Firefox - Solo para iconos Material */
+@-moz-document url-prefix() {
+  /* Forzar la carga de fuentes Material Icons en Firefox */
+  @font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./assets/icons/MaterialIcons-Regular.woff2') format('woff2'),
+         url('./assets/icons/MaterialIcons-Regular.woff') format('woff');
+    font-display: block;
+  }
+  
+  /* Configuración específica para iconos de Material en Firefox */
+  .mat-icon {
+    font-family: 'Material Icons' !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Iconos específicos con contenido forzado */
+  .mat-icon[fontIcon="delete"]:before {
+    content: "delete" !important;
+    font-family: 'Material Icons' !important;
+  }
+  
+  .mat-icon[fontIcon="edit"]:before {
+    content: "edit" !important;
+    font-family: 'Material Icons' !important;
+  }
+  
+  .mat-icon[fontIcon="visibility"]:before {
+    content: "visibility" !important;
+    font-family: 'Material Icons' !important;
+  }
+  
+  .mat-icon[fontIcon="refresh"]:before {
+    content: "refresh" !important;
+    font-family: 'Material Icons' !important;
+  }
+}
+
+
+
+/* Ocultar iconos nativos del navegador en campos de contraseña */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Para Edge y otros navegadores basados en Chromium */
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+/* Ocultar el icono de mostrar contraseña nativo en Edge */
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+/* Asegurar que solo se muestre nuestro icono personalizado en Material */
+.mat-mdc-form-field input[type="password"]::-ms-reveal,
+.mat-mdc-form-field input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+body, * {
+  font-family:
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    'SF Pro Display',
+    'SF Pro Text',
+    'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif !important;
+}
+
+
+/* Botones Material */
+.mat-button, .mat-raised-button {
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.mat-raised-button {
+  background-color: #0078D4; /* Azul Microsoft */
+  color: white;
+}
+
+.mat-raised-button:hover {
+  background-color: #005A9E;
+}
+
+/* Tarjetas Material */
+.mat-card {
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  padding: 16px;
+}
+
+.mat-card-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Campos de entrada */
+.mat-form-field {
+  width: 100%;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  border-color: #605E5C;
+}
+
+.mat-form-field-appearance-outline.mat-focused .mat-form-field-outline {
+  border-color: #0078D4;
+}
+
+/* Menús y diálogos */
+.mat-menu-panel, .mat-dialog-container {
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Tablas */
+.mat-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mat-header-cell {
+  background-color: #0078D4;
+  color: white;
+  font-weight: bold;
+}
+
+.mat-cell {
+  padding: 12px;
+}
+
+/* Toggle y checkbox */
+.mat-slide-toggle-bar {
+  background-color: #605E5C;
+}
+
+.mat-slide-toggle.mat-checked .mat-slide-toggle-thumb {
+  background-color: #0078D4;
+}
+
+.mat-checkbox-checked .mat-checkbox-background {
+  background-color: #0078D4;
+}
+
+/* Tooltips */
+.mat-tooltip {
+  background-color: #323130;
+  color: white;
+  font-size: 14px;
+}
+
+/* Snackbars personalizados */
+.error-snackbar {
+  background-color: #d32f2f !important;
+  color: white !important;
+}
+
+.success-snackbar {
+  background-color: #388e3c !important;
+  color: white !important;
+}
+
+.info-snackbar {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.warning-snackbar {
+  background-color: #f57c00 !important;
+  color: white !important;
+}
+
+/* Ajustar el ancho del touch target para iconos */
+.mat-mdc-icon-button .mat-mdc-button-touch-target {
+  width: auto !important;
+  min-width: auto !important;
+}

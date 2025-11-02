@@ -1,0 +1,121 @@
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Configuración de compresión
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml
+        application/font-woff
+        application/font-woff2
+        application/pdf;
+
+    # CRÍTICO: Configuración específica para archivos PDF - DEBE IR PRIMERO
+    location ~* \.pdf$ {
+        add_header Content-Type "application/pdf" always;
+        add_header Content-Disposition "inline" always;
+        expires 1h;
+        add_header Cache-Control "public, must-revalidate";
+        add_header Vary "Accept-Encoding";
+        access_log off;
+        tcp_nopush on;
+        tcp_nodelay on;
+        # Forzar el tipo MIME
+        types {
+            application/pdf pdf;
+        }
+    }
+
+    # CRÍTICO: Configuración específica para archivos .mjs (ES modules) - DEBE IR SEGUNDO
+    location ~* \.mjs$ {
+        add_header Content-Type "application/javascript; charset=utf-8" always;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary "Accept-Encoding";
+        access_log off;
+        # Forzar el tipo MIME
+        types {
+            application/javascript mjs;
+        }
+    }
+
+    # CRÍTICO: Configuración específica para archivos .js - DEBE IR TERCERO
+    location ~* \.js$ {
+        add_header Content-Type "application/javascript; charset=utf-8" always;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary "Accept-Encoding";
+        access_log off;
+    }
+
+    # Configuración específica para archivos JS con hash (main.*.js)
+    location ~* ^/main\.[a-f0-9]+\.js$ {
+        add_header Content-Type "application/javascript; charset=utf-8" always;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary "Accept-Encoding";
+        access_log off;
+        tcp_nopush on;
+        tcp_nodelay on;
+    }
+
+    # Configuración de caché para otros assets estáticos (sin js/mjs/pdf)
+    location ~* \.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary "Accept-Encoding";
+        access_log off;
+        tcp_nopush on;
+        tcp_nodelay on;
+    }
+
+    # Configuración para Angular SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+
+    # Configuración de compresión adicional para HTML
+    location ~* \.(html|htm)$ {
+        gzip_static on;
+        expires 1h;
+        add_header Cache-Control "public, must-revalidate";
+    }
+
+    # Configuración de seguridad mejorada (sin CSP restrictiva)
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Content Security Policy más permisiva para permitir archivos JS
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss: http:;" always;
+
+    # Ocultar versión de nginx
+    server_tokens off;
+
+    # Configuración de timeouts
+    keepalive_timeout 65;
+    keepalive_requests 100;
+    send_timeout 60;
+
+    # Logging específico para debugging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log debug;
+}

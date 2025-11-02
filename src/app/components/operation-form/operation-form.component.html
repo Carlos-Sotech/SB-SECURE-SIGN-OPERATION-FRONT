@@ -1,0 +1,368 @@
+<div class="operation-form-container" [class.edit-mode]="isEditMode">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ isEditMode ? 'edit' : 'add_task' }}</mat-icon>
+    {{ isEditMode ? 'Editar Operación' : 'Nueva Operación' }}
+    <button mat-icon-button type="button" (click)="onCancel()" style="float: right;" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </h2>
+
+  <form [formGroup]="operationForm" (ngSubmit)="onSubmit()">
+    <div class="form-section">
+      <!-- Datos básicos de la operación -->
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Caducidad de la operación (En horas)</mat-label>
+          <mat-hint>0 para operación sin caducidad</mat-hint>
+          <input matInput type="number" formControlName="minutesAlive" placeholder="0">
+          <mat-error *ngIf="operationForm.get('minutesAlive')?.hasError('required')">
+            Las horas son requeridas
+          </mat-error>
+          <mat-error *ngIf="operationForm.get('minutesAlive')?.hasError('min')">
+            Las horas deben ser mayor o igual a 0
+          </mat-error>
+        </mat-form-field>
+        <div class="expiration-info" *ngIf="operationForm.get('minutesAlive')?.value">
+          <small>(Horas: {{ operationForm.get('minutesAlive')?.value }} - Caduca: {{ getExpirationDate() }})</small>
+        </div>
+      </div>
+      <div class="form-row">
+           <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descripción de la Operación</mat-label>
+        <input matInput formControlName="descripcionOperacion" placeholder="Ingrese la descripción de la operación"
+        maxlength="50"
+        >
+        <mat-error *ngIf="operationForm.get('descripcionOperacion')?.hasError('required')">
+          La descripción de la operación es requerida
+        </mat-error>
+      </mat-form-field>
+      </div>
+      <div class="form-row">
+        <div class="pdf-section">
+          <div class="pdf-input-container">
+            <label for="filePDF"><strong>Archivo PDF {{ !isEditMode ? '*' : '' }}</strong></label>
+            <div class="file-input-wrapper">
+              <input id="filePDF" type="file" accept="application/pdf" (change)="onFileSelected($event)" />
+              <button mat-icon-button type="button" (click)="clearPdfFile()" *ngIf="selectedFile" class="clear-pdf-btn">
+                <mat-icon>clear</mat-icon>
+              </button>
+            </div>
+            <div class="file-info" *ngIf="selectedFile">
+              <mat-icon>description</mat-icon>
+              <span>{{ selectedFile.name }}</span>
+              <span class="file-size">({{ formatFileSize(selectedFile.size) }})</span>
+            </div>
+            <div class="file-error" *ngIf="(!isEditMode && !selectedFile && operationForm.get('filePDF')?.touched) || (isEditMode && selectedFile && operationForm.get('filePDF')?.invalid && operationForm.get('filePDF')?.touched)">
+              <mat-icon>error</mat-icon>
+              <span *ngIf="!isEditMode">El archivo PDF es obligatorio para crear una operación</span>
+              <span *ngIf="isEditMode">El archivo PDF seleccionado no es válido</span>
+            </div>
+          </div>
+          
+          <!-- Loading indicator for PDF -->
+          <div class="pdf-loading" *ngIf="isLoadingPdf">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Cargando PDF...</span>
+          </div>
+          
+          <!-- Visor de PDF con ngx-extended-pdf-viewer y overlay de áreas de firma -->
+          <div class="pdf-viewer-container" *ngIf="pdfSrc && !isLoadingPdf" #pdfContainer>
+            
+            <ngx-extended-pdf-viewer 
+              [src]="pdfSrc"
+              [height]="'100%'"
+              [showToolbar]="false"
+              [showSidebarButton]="false"
+              [showFindButton]="false"
+              [showPagingButtons]="false"
+              [showZoomButtons]="false"
+              [showPresentationModeButton]="false"
+              [showPrintButton]="false"
+              [showDownloadButton]="false"
+              [showSecondaryToolbarButton]="false"
+              [showRotateButton]="false"
+              [showHandToolButton]="false"
+              [showSpreadButton]="false"
+              [showPropertiesButton]="false"
+              (pdfLoadingStarted)="onPdfLoadingStarted($event)"
+              (pdfLoadingEnded)="onPdfLoaded($event)"
+              (pageRendered)="onPageChange($event)"
+              (error)="onPdfError($event)"
+              class="pdf-viewer">
+            </ngx-extended-pdf-viewer>
+
+            <!-- Canvas overlay para áreas de firma -->
+            <canvas 
+              #signatureCanvas
+              class="signature-canvas-overlay">
+            </canvas>
+          </div>
+          
+          <!-- Message when no PDF is loaded -->
+          <div class="pdf-no-file" *ngIf="!pdfSrc && !isLoadingPdf && isEditMode">
+            <mat-icon>description</mat-icon>
+            <span>No hay PDF cargado para esta operación</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipo de Operación</mat-label>
+          <mat-select formControlName="operationType">
+            <mat-option *ngFor="let type of operationTypes" [value]="type">
+              {{ getOperationTypeText(type) }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="operationForm.get('operationType')?.hasError('required')">
+            El tipo de operación es requerido
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+       
+      <div class="form-row">
+        <mat-checkbox formControlName="isNecessaryConfirmReading">
+          ¿Es necesario confirmar la lectura?
+        </mat-checkbox>
+        
+
+      </div>
+
+      <fieldset class="reading-confirmation-section" *ngIf="operationForm.get('isNecessaryConfirmReading')?.value">
+        <legend>
+          <mat-icon>visibility</mat-icon>
+          Confirmación de Lectura
+        </legend>
+        
+     
+        <div class="form-row" *ngIf="operationForm.get('isNecessaryConfirmReading')?.value">
+          <mat-checkbox formControlName="readingAllPages">
+            Leer todas las páginas
+          </mat-checkbox>
+        </div>
+
+        <div class="form-row" *ngIf="operationForm.get('isNecessaryConfirmReading')?.value">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Texto de Lectura</mat-label>
+            <textarea matInput formControlName="readingText" rows="3"
+                      placeholder="Texto de lectura (opcional)"></textarea>
+          </mat-form-field>
+        </div>
+      </fieldset>
+      </div>
+
+    <!-- Sección de Agreements (solo visible en edición) -->
+    <div class="form-section" id="agreementsSection" *ngIf="isEditMode">
+      <div class="section-header">
+        <h3>
+          <mat-icon>description</mat-icon>
+          Acuerdos (Agreements)
+        </h3>
+        <button mat-raised-button color="primary" type="button" (click)="openCreateAgreementDialog()">
+          <mat-icon>add</mat-icon>
+          Añadir Acuerdo
+        </button>
+      </div>
+
+      <div class="loading-container" *ngIf="isLoadingAgreements">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Cargando acuerdos...</span>
+          </div>
+
+      <div class="agreements-list" *ngIf="!isLoadingAgreements">
+        <div *ngIf="agreements.length === 0" class="empty-state">
+          <mat-icon>description</mat-icon>
+          <p>No hay acuerdos creados</p>
+        </div>
+
+        <mat-card *ngFor="let agreement of agreements" class="agreement-card">
+          <mat-card-header>
+            <mat-card-title>Acuerdo #{{ agreement.id }}</mat-card-title>
+            <mat-card-subtitle>
+              <mat-chip [color]="agreement.accepted ? 'primary' : 'warn'" selected>
+                {{ agreement.accepted ? 'Aceptado' : 'Pendiente' }}
+              </mat-chip>
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="agreement-text">{{ agreement.text }}</p>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="openEditAgreementDialog(agreement)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+            <button mat-button color="warn" (click)="deleteAgreement(agreement)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          </mat-card-actions>
+        </mat-card>
+        </div>
+      </div>
+
+      <!-- Sección de Parties (solo visible en edición) -->
+    <div class="form-section" id="partiesSection" *ngIf="isEditMode">
+      <div class="section-header">
+          <h3>
+            <mat-icon>people</mat-icon>
+            Firmantes (Parties)
+          </h3>
+        <button mat-raised-button color="primary" type="button" (click)="openCreatePartyDialog()"
+                [disabled]="!canAddMoreParties">
+          <mat-icon>person_add</mat-icon>
+          Añadir Firmante
+          </button>
+        </div>
+        
+                 <!-- Mensaje informativo para operaciones remotas -->
+         <div *ngIf="operationForm.get('operationType')?.value === 'Remota'" class="remote-operation-info">
+           <mat-card class="info-card">
+             <mat-card-content>
+               <p>
+                 <mat-icon>info</mat-icon>
+                 <strong>Operación Remota:</strong> Máximo un firmante.
+                 <span *ngIf="parties.length >= 1; else canAddParty">
+                   Ya tienes un firmante asignado.
+                 </span>
+                 <ng-template #canAddParty>
+                   Puedes agregar un firmante.
+                 </ng-template>
+               </p>
+             </mat-card-content>
+           </mat-card>
+         </div>
+
+      <div class="loading-container" *ngIf="isLoadingParties">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Cargando firmantes...</span>
+            </div>
+
+      <div class="parties-list" *ngIf="!isLoadingParties">
+        <div *ngIf="parties.length === 0" class="empty-state">
+          <mat-icon>people</mat-icon>
+          <p>No hay firmantes creados</p>
+            </div>
+
+        <mat-card *ngFor="let party of parties" class="party-card">
+          <mat-card-header>
+            <mat-card-title>{{ party.firstName }} {{ party.lastName }}</mat-card-title>
+            <mat-card-subtitle>
+              <mat-chip [color]="party.required ? 'primary' : 'accent'" selected>
+                {{ party.required ? 'Requerido' : 'Opcional' }}
+              </mat-chip>
+              <mat-chip [color]="getPartyStatusColor(party.status)" selected style="margin-left: 8px;">
+                {{ getPartyStatusText(party.status) }}
+              </mat-chip>
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="party-info">
+              <p><strong>Email:</strong> {{ party.email }}</p>
+              <p><strong>Teléfono:</strong> {{ party.phoneNumber }}</p>
+              <p *ngIf="getAreasForParty(party.id).length > 0" class="coordinates-info">
+                <strong>Área de firma:</strong> 
+                <mat-chip color="primary" selected>
+                  X: {{ party.x }}, Y: {{ party.y }}, {{ party.width }} x {{ party.height }}
+                </mat-chip>
+              </p>
+              <p *ngIf="getAreasForParty(party.id).length === 0" class="no-area-info">
+                <strong>Área de firma:</strong> 
+                <mat-chip color="warn" selected>Sin área asignada</mat-chip>
+              </p>
+              <p><strong>Página:</strong> {{ party.page }}</p>
+              <p><strong>Voz:</strong> {{ party.voice ? "Si" : "No" }}</p>
+              <p><strong>Huella digital</strong> {{ party.fingerPrint ? "Si" : "No" }}</p>
+              <p><strong>Foto</strong> {{ party.photo ? "Si" : "No" }}</p>
+            </div>
+            <div class="party-texts" *ngIf="party.partyTexts && party.partyTexts.length > 0">
+              <h5>Textos del firmante:</h5>
+              <mat-chip *ngFor="let text of party.partyTexts" class="text-chip">
+                {{ text.text }}
+              </mat-chip>
+            </div>
+            
+            <!-- Áreas asignadas a este firmante -->
+            <div class="assigned-areas" *ngIf="getAreasForParty(party.id).length > 0">
+              <h5>Áreas de firma asignadas:</h5>
+              <div *ngFor="let area of getAreasForParty(party.id)" class="area-item">
+                <mat-chip [style.background-color]="area.color" color="primary">
+                  <mat-icon>draw</mat-icon>
+                  Página {{area.page}}: X:{{area.x}}, Y:{{area.y}}, {{area.width}}x{{area.height}}
+                </mat-chip>
+                <button mat-icon-button color="warn" (click)="removeAreaFromParty(area.id, $event)" class="remove-area-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="openEditPartyDialog(party)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+            <button mat-button color="warn" (click)="deleteParty(party)">
+                    <mat-icon>delete</mat-icon>
+              Eliminar
+                  </button>
+            <button mat-raised-button color="accent" (click)="startDefiningAreaForParty(party.id)">
+              <mat-icon>draw</mat-icon>
+              Definir Área
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <!-- Botón de debug temporal -->
+     
+      <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+      <button mat-raised-button color="primary" type="submit"
+              [disabled]="!isFormValid() || isSubmitting">
+        <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+        <span *ngIf="!isSubmitting">{{ isEditMode ? 'Actualizar' : 'Continuar' }}</span>
+      </button>
+
+      <button mat-raised-button color="warn" type="button" 
+              *ngIf="isEditMode && canLaunchOperation()"
+              (click)="launchOperation()"
+              [disabled]="isLaunchingOperation"
+              class="launch-btn">
+        <mat-spinner diameter="20" *ngIf="isLaunchingOperation"></mat-spinner>
+        <mat-icon *ngIf="!isLaunchingOperation">rocket_launch</mat-icon>
+        <span *ngIf="!isLaunchingOperation">Lanzar Operación</span>
+        <span *ngIf="isLaunchingOperation">Lanzando...</span>
+      </button>
+      
+      <!-- Información sobre requisitos para lanzar operación -->
+      <div class="launch-requirements" *ngIf="isEditMode && !canLaunchOperation()">
+        <mat-card class="requirements-card">
+          <mat-card-content>
+            <h4>
+              <mat-icon>info</mat-icon>
+              Requisitos para lanzar la operación
+            </h4>
+            <ul>
+              <li [class.met]="data?.operation?.status === 'Pendiente'">
+                <mat-icon>{{ data?.operation?.status === 'Pendiente' ? 'check_circle' : 'cancel' }}</mat-icon>
+                Estado: {{ data?.operation?.status || 'Desconocido' }}
+              </li>
+              <li [class.met]="parties.length > 0">
+                <mat-icon>{{ parties.length > 0 ? 'check_circle' : 'cancel' }}</mat-icon>
+                Firmantes: {{ parties.length }} creado(s)
+              </li>
+              <!-- Información para operaciones remotas -->
+              <li *ngIf="data?.operation?.operationType === 'Remota'" 
+                  [class.met]="data?.operation?.operationType === 'Remota' && parties.length > 0">
+                <mat-icon>{{ (data?.operation?.operationType === 'Remota' && parties.length > 0) ? 'check_circle' : 'info' }}</mat-icon>
+                Operación Remota: Se recomienda 1 firmante (actual: {{ parties.length }})
+              </li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </form>
+</div>

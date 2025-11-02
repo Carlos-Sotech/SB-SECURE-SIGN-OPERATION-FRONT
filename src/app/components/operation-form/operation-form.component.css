@@ -1,0 +1,1254 @@
+/* Centrado del formulario en el modal */
+:host ::ng-deep .mat-dialog-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh;
+  background: #f7f7f7;
+}
+
+.operation-form-container {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 320px;
+  max-width: 900px;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 24px 32px 32px 32px;
+}
+
+.operation-form-container h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--mat-primary-main-color, #3f51b5);
+}
+
+.operation-form-container h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--mat-primary-main-color, #3f51b5);
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.operation-form-container mat-icon {
+  color: var(--mat-primary-main-color, #3f51b5);
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  width: 100%;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Mensaje informativo para operaciones remotas */
+.remote-operation-info {
+  margin: 16px 0;
+}
+
+.remote-operation-info .info-card {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.remote-operation-info .info-card mat-card-content {
+  padding: 12px 16px;
+}
+
+.remote-operation-info .info-card p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1976d2;
+  font-size: 14px;
+}
+
+.remote-operation-info .info-card mat-icon {
+  color: #2196f3;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.expiration-info {
+  margin-top: 4px;
+  margin-left: 16px;
+  color: #666;
+  font-style: italic;
+}
+
+.expiration-info small {
+  color: #888;
+  font-size: 12px;
+}
+
+.form-row.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row.two-columns mat-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.loading-container mat-spinner {
+  margin-bottom: 8px;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: #666;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #ccc;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Agreements List */
+.agreements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agreement-card {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+}
+
+.agreement-card mat-card-header {
+  margin-bottom: 6px;
+}
+
+.agreement-card mat-card-title {
+  font-size: 1em;
+}
+
+.agreement-text {
+  margin: 12px 0;
+  line-height: 1.5;
+  color: #333;
+  max-height: 100px;
+  overflow-y: auto;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+}
+
+.agreement-card mat-card-actions {
+  padding: 8px 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* Parties List */
+.parties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.party-card {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+}
+
+.party-card mat-card-header {
+  margin-bottom: 6px;
+}
+
+.party-card mat-card-title {
+  font-size: 1em;
+}
+
+.party-info {
+  margin: 12px 0;
+}
+
+.party-info p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.party-info strong {
+  color: #333;
+}
+
+.party-texts {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.party-texts h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.text-chip {
+  margin: 2px 4px 2px 0;
+  font-size: 12px;
+}
+
+.party-card mat-card-actions {
+  padding: 8px 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* PDF Section */
+.pdf-section {
+  margin-top: 16px;
+}
+
+.pdf-input-container {
+  margin-bottom: 16px;
+}
+
+.file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.file-input-wrapper input[type="file"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.clear-pdf-btn {
+  margin-left: 8px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  border: 1px solid #bbdefb;
+}
+
+.file-info mat-icon {
+  color: #1976d2;
+}
+
+.file-size {
+  color: #666;
+  font-size: 12px;
+}
+
+/* PDF Loading */
+.pdf-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  margin-top: 16px;
+}
+
+.pdf-loading mat-spinner {
+  margin-bottom: 8px;
+}
+
+.pdf-loading span {
+  color: #666;
+  font-size: 14px;
+}
+
+/* PDF No File */
+.pdf-no-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  margin-top: 16px;
+  color: #666;
+}
+
+.pdf-no-file mat-icon {
+  color: #999;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.pdf-viewer-container {
+  position: relative !important;
+  width: 100%;
+  max-width: 600px;
+  min-width: 280px; /* Ancho mínimo para evitar que se oculte en pantallas pequeñas */
+  height: 80vh;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden; /* sin scroll aquí; lo maneja #viewerContainer */
+  transition: all 0.3s ease;
+  margin: 0 auto;
+  display: flex !important; /* Forzar display */
+  flex-direction: column;
+  visibility: visible !important; /* Forzar visibilidad */
+}
+
+/* Modo edición: 40% más alto */
+.operation-form-container.edit-mode .pdf-viewer-container {
+  height: 112vh; /* 80vh + 40% = 80vh * 1.4 = 112vh */
+}
+
+.pdf-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pdf-controls button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.available-areas-count {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.assigned-areas {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.assigned-areas h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.area-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.area-item mat-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remove-area-btn {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.party-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.area-selector {
+  width: 100%;
+}
+
+.area-selector mat-form-field {
+  width: 100%;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 0;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.form-actions button {
+  min-width: 120px;
+  position: relative;
+  z-index: 11;
+}
+
+.form-actions button[type="submit"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--mat-primary-main-color, #3f51b5) !important;
+  color: white !important;
+  pointer-events: auto !important;
+}
+
+.form-actions button[type="submit"]:disabled {
+  background-color: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+}
+
+.form-actions button[type="submit"]:not(:disabled):hover {
+  background-color: var(--mat-primary-darker-color, #303f9f) !important;
+}
+
+/* Dialog Content */
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+mat-dialog-actions {
+  padding: 16px 20px;
+  margin-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f5f5f5;
+}
+
+mat-dialog-actions button {
+  min-width: 100px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .operation-form-container {
+    max-width: 98vw;
+    padding: 16px 2vw 40px 2vw;
+  }
+  .pdf-viewer-container {
+    max-width: 90vw;
+    min-width: 280px; /* Ancho mínimo garantizado */
+    width: 100%;
+    height: 75vh;
+    display: block !important;
+    visibility: visible !important;
+  }
+  .operation-form-container.edit-mode .pdf-viewer-container {
+    height: 105vh; /* 75vh + 40% = 75vh * 1.4 = 105vh */
+  }
+  
+  /* Asegurar visibilidad del PDF y canvas */
+  .pdf-viewer-container ngx-extended-pdf-viewer,
+  .pdf-viewer-container .signature-canvas-overlay {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .operation-form-container {
+    max-width: 99vw;
+    padding: 8px 2vw 30px 2vw;
+  }
+  .pdf-viewer-container {
+    max-width: 90vw;
+    min-width: 280px; /* Ancho mínimo garantizado */
+    width: 100%;
+    height: 75vh;
+    display: block !important;
+    visibility: visible !important;
+  }
+  .operation-form-container.edit-mode .pdf-viewer-container {
+    height: 105vh; /* 75vh + 40% = 75vh * 1.4 = 105vh */
+  }
+  
+  /* Asegurar visibilidad del PDF y canvas */
+  .pdf-viewer-container ngx-extended-pdf-viewer,
+  .pdf-viewer-container .signature-canvas-overlay {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .operation-form-container {
+    max-width: 100vw;
+    padding: 4px 0 20px 0;
+    border-radius: 0;
+  }
+  .form-row.two-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .party-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .checkbox-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .party-item {
+    padding: 16px;
+  }
+  
+  .party-text-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .pdf-viewer-container {
+    max-width: 95vw;
+    min-width: 280px; /* Ancho mínimo garantizado */
+    width: 100%;
+    height: 70vh;
+    display: block !important;
+    visibility: visible !important;
+  }
+  .operation-form-container.edit-mode .pdf-viewer-container {
+    height: 98vh; /* 70vh + 40% = 70vh * 1.4 = 98vh */
+  }
+  
+  /* Asegurar visibilidad del PDF y canvas */
+  .pdf-viewer-container ngx-extended-pdf-viewer,
+  .pdf-viewer-container .signature-canvas-overlay {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .operation-form-container {
+    max-width: 100vw;
+    padding: 4px 0 15px 0;
+  }
+  .form-section {
+    padding: 12px;
+  }
+  
+  .party-item {
+    padding: 12px;
+  }
+  
+  .party-texts-container {
+    padding: 12px;
+  }
+  
+  .pdf-viewer-container {
+    max-width: 98vw;
+    min-width: 280px; /* Ancho mínimo garantizado para que el PDF y selector sean visibles */
+    width: 100%;
+    height: 65vh;
+    display: block !important; /* Asegurar que siempre sea visible */
+    visibility: visible !important;
+  }
+  .operation-form-container.edit-mode .pdf-viewer-container {
+    height: 91vh; /* 65vh + 40% = 65vh * 1.4 = 91vh */
+  }
+  
+  /* Asegurar que el PDF viewer siempre sea visible */
+  .pdf-viewer-container ngx-extended-pdf-viewer {
+    display: block !important;
+    visibility: visible !important;
+    min-width: 280px;
+  }
+  
+  /* Asegurar que el canvas overlay siempre sea visible */
+  .signature-canvas-overlay {
+    display: block !important;
+    visibility: visible !important;
+    min-width: 280px;
+  }
+} 
+
+/* ... existing styles ... */
+
+/* Sección de PDF */
+.pdf-section {
+  width: 100%;
+  min-width: 280px; /* Ancho mínimo para evitar que se oculte */
+  margin-bottom: 20px;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.pdf-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-input-wrapper input[type="file"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+}
+
+.clear-pdf-btn {
+  color: #f44336;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  border-left: 4px solid #2196f3;
+}
+
+.file-info mat-icon {
+  color: #2196f3;
+}
+
+.file-size {
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* Visor de PDF - Duplicado, consolidado arriba */
+
+.pdf-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+.pdf-viewer-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.pdf-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.pdf-controls button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-viewer-content {
+  background: white;
+  position: relative;
+}
+
+.pdf-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: #f44336;
+  background: #ffebee;
+  border-radius: 4px;
+  margin: 16px;
+}
+
+/* Estilos específicos para ng2-pdf-viewer */
+pdf-viewer {
+  display: block;
+  width: 100%;
+  height: 500px;
+  overflow: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  pdf-viewer {
+    height: 300px;
+  }
+  
+  .file-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .clear-pdf-btn {
+    align-self: flex-end;
+  }
+}
+
+/* Animaciones */
+.pdf-viewer-container {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reading Confirmation Section */
+.reading-confirmation-section {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  background-color: #fafafa;
+}
+
+.reading-confirmation-section legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1em;
+  font-weight: 500;
+  color: var(--mat-primary-main-color, #3f51b5);
+  padding: 0 10px;
+  margin-bottom: 16px;
+}
+
+.reading-confirmation-section legend mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.reading-confirmation-section .form-row {
+  margin-bottom: 16px;
+}
+
+.reading-confirmation-section .form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Estados de hover */
+.file-input-wrapper input[type="file"]:hover {
+  border-color: #2196f3;
+}
+
+.clear-pdf-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Mejoras de accesibilidad */
+.file-input-wrapper input[type="file"]:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+.pdf-viewer-header button:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+/* Disabled Fields Styling */
+.disabled-field {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.disabled-field mat-checkbox {
+  color: #999 !important;
+}
+
+.disabled-field mat-form-field {
+  color: #999 !important;
+}
+
+.disabled-field mat-label {
+  color: #999 !important;
+}
+
+.disabled-field textarea {
+  color: #999 !important;
+  background-color: #f5f5f5 !important;
+}
+
+.disabled-field .mat-form-field-outline {
+  color: #ccc !important;
+}
+
+.disabled-field .mat-form-field-outline-thick {
+  color: #ccc !important;
+}
+
+.coordinates-info {
+  margin: 8px 0;
+}
+
+.coordinates-info mat-chip {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.no-area-info {
+  margin: 8px 0;
+}
+
+.no-area-info mat-chip {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.signature-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ff9800 !important;
+  color: white !important;
+}
+
+.signature-btn:hover {
+  background-color: #ff6b35;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+.launch-btn {
+  background-color: #f44336;
+  color: white;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.launch-btn:hover {
+  background-color: #d32f2f;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
+.launch-btn:disabled {
+  background-color: #ccc;
+  color: #666;
+  transform: none;
+  box-shadow: none;
+}
+
+.launch-requirements {
+  margin-top: 20px;
+}
+
+.requirements-card {
+  border: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.requirements-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.requirements-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirements-card li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.requirements-card li.met {
+  color: #4CAF50;
+}
+
+.requirements-card li mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.requirements-card li.met mat-icon {
+  color: #4CAF50;
+}
+
+.requirements-card li:not(.met) mat-icon {
+  color: #f44336;
+}
+
+/* Canvas Overlay para áreas de firma */
+.signature-canvas-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 280px; /* Ancho mínimo para evitar que se oculte */
+  pointer-events: auto;
+  z-index: 1000;
+  background: transparent;
+  box-sizing: border-box;
+  transform: translateZ(0);
+  display: block !important;
+  visibility: visible !important;
+}
+
+.signature-canvas-overlay.drawing-mode {
+  pointer-events: auto;
+  border-color: #FF5722;
+  border-width: 3px;
+}
+
+/* Indicador de modo de definición */
+.drawing-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 20;
+  display: none;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  min-width: 200px;
+}
+
+.drawing-indicator.active {
+  display: block;
+  animation: slideIn 0.3s ease-out;
+}
+
+.drawing-indicator mat-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.drawing-instructions {
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Ocultar la barra de herramientas del PDF viewer */
+::ng-deep .pdf-viewer .toolbar {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer .toolbarViewer {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer .toolbarViewerLeft {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer .toolbarViewerRight {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer .toolbarViewerMiddle {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer .secondaryToolbar {
+  display: none !important;
+}
+
+/* Hacer el PDF viewer más grande */
+::ng-deep .pdf-viewer {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+::ng-deep .pdf-viewer #viewerContainer {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+::ng-deep .pdf-viewer #viewerContainer .page {
+  margin: 0 auto !important;
+  max-width: 100% !important;
+}
+
+/* Asegurar que el contenido del PDF ocupe todo el ancho */
+::ng-deep .pdf-viewer #viewerContainer .page canvas {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Hacer que las secciones del formulario ocupen más espacio */
+.form-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  width: 100%;
+}
+
+mat-form-field, .full-width mat-form-field {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 12px auto;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .operation-form-container {
+    max-width: 100vw;
+    padding: 4px 0;
+    border-radius: 0;
+  }
+  .pdf-viewer-container {
+    max-width: 98vw;
+    min-width: 280px; /* Ancho mínimo garantizado */
+    width: 100%;
+    height: 70vh;
+    display: flex !important; /* Forzar display */
+    visibility: visible !important; /* Forzar visibilidad */
+  }
+  
+  /* Asegurar visibilidad del PDF y canvas */
+  .pdf-viewer-container ngx-extended-pdf-viewer,
+  .pdf-viewer-container .signature-canvas-overlay {
+    display: block !important;
+    visibility: visible !important;
+    min-width: 280px;
+  }
+}
+
+.pdf-viewer {
+  width: 100%;
+  height: 100%;
+  border: none;
+  flex: 1;
+}
+
+/* Mostrar páginas con scroll natural del visor */
+::ng-deep .pdf-viewer #viewerContainer {
+  height: 100% !important;
+  overflow: auto !important; /* único scroll visible */
+}
+
+::ng-deep .pdf-viewer #viewerContainer .page {
+  display: block !important;
+  margin: 10px auto !important;
+  max-width: 100% !important;
+}
+
+/* Ocultar sidebar del visor de PDF */
+::ng-deep .pdf-viewer #sidebarContainer {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer #sidebarContainer * {
+  display: none !important;
+}
+
+::ng-deep .pdf-viewer #viewerContainer {
+  margin-left: 0 !important;
+  left: 0 !important;
+}
+
+::ng-deep .pdf-viewer #outerContainer {
+  margin-left: 0 !important;
+}
+
+::ng-deep .pdf-viewer #mainContainer {
+  margin-left: 0 !important;
+}
+
+::ng-deep .pdf-viewer #sidebarContainer,
+::ng-deep .pdf-viewer #sidebarContainer *,
+::ng-deep .pdf-viewer #outlineView,
+::ng-deep .pdf-viewer #attachmentsView,
+::ng-deep .pdf-viewer #layersView,
+::ng-deep .pdf-viewer #thumbnailsView {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Asegurar que el contenedor principal ocupe todo el espacio */
+::ng-deep .pdf-viewer #viewerContainer {
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+::ng-deep .pdf-viewer #mainContainer {
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+/* Ocultar botones relacionados con el sidebar */
+::ng-deep .pdf-viewer .toolbarViewerLeft button[data-l10n-id="sidebarToggle"],
+::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="sidebar"],
+::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="outline"],
+::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="thumbnails"],
+::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="attachments"] {
+  display: none !important;
+}
+
+
+
+/* Ajustar el contenedor del PDF viewer para evitar overflow */
+::ng-deep .pdf-viewer {
+  width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Asegurar que el scroll del PDF viewer sea siempre visible */
+::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar {
+  width: 16px;
+}
+
+::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 8px;
+}
+
+::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Asegurar que el scroll tenga espacio suficiente */
+::ng-deep .pdf-viewer #viewerContainer {
+  scrollbar-width: 16px;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Ajustar el contenedor del PDF para evitar que el scroll se oculte */
+.pdf-section {
+  margin-bottom: 20px;
+}

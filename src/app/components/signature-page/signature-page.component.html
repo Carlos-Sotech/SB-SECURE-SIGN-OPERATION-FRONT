@@ -1,0 +1,126 @@
+<div class="signature-page-container">
+  <!-- Toolbar -->
+  <mat-toolbar class="signature-toolbar">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="toolbar-title">Definir Áreas de Firma - Operación #{{ operationId }}</span>
+    <span class="spacer"></span>
+    
+    <!-- Indicador de página -->
+    <div class="page-indicator" *ngIf="!isLoading && totalPages > 1">
+      <span class="page-text">Página {{ currentPage }} de {{ totalPages }}</span>
+    </div>
+    
+    <!-- Botón de aceptar -->
+    <button 
+      mat-icon-button 
+      color="accent"
+      (click)="acceptSignatureAreas()"
+      class="accept-btn">
+      <mat-icon>check</mat-icon>
+    </button>
+    
+    <!-- Botón de cancelar definición de área -->
+    <button 
+      *ngIf="isDefiningArea"
+      mat-raised-button 
+      color="warn" 
+      (click)="cancelAreaDefinition()"
+      class="cancel-btn">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+  </mat-toolbar>
+
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Cargando documento...</p>
+  </div>
+
+  <!-- Main content - PDF centered -->
+  <div *ngIf="!isLoading" class="main-content">
+    <!-- PDF Viewer Section - Centrado -->
+    <div class="pdf-section">
+      <div class="pdf-container" 
+           [class.defining-area]="isDefiningArea"
+           #pdfContainer 
+           (scroll)="onPdfScroll($event)">
+        <div *ngIf="isLoadingPdf" class="pdf-loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Cargando PDF...</p>
+        </div>
+        
+        <!-- PDF Viewer -->
+        <ngx-extended-pdf-viewer 
+          *ngIf="pdfSrc && !isLoadingPdf"
+          [src]="pdfSrc"
+          [height]="'100%'"
+          [showToolbar]="false"
+          [showSidebarButton]="false"
+          [showFindButton]="false"
+          [showPagingButtons]="false"
+          [showZoomButtons]="false"
+          [showPresentationModeButton]="false"
+          [showPrintButton]="false"
+          [showDownloadButton]="false"
+          [showSecondaryToolbarButton]="false"
+          [showRotateButton]="false"
+          [showHandToolButton]="false"
+          [showSpreadButton]="false"
+          [showPropertiesButton]="false"
+          (pdfLoadingStarted)="isLoadingPdf = true"
+          (pdfLoadingEnded)="onPdfLoaded($event)"
+          (pagesLoaded)="onPagesLoaded($event)"
+          (error)="onPdfError($event)"
+          class="pdf-viewer">
+        </ngx-extended-pdf-viewer>
+
+        <!-- Botones laterales de navegación -->
+        <button
+          class="side-nav left"
+          mat-fab
+          color="primary"
+          (click)="prevPage()"
+          [disabled]="getButtonStates().prevDisabled"
+          aria-label="Anterior">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        <button
+          class="side-nav right"
+          mat-fab
+          color="primary"
+          (click)="nextPage()"
+          [disabled]="getButtonStates().nextDisabled"
+          aria-label="Siguiente">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+
+        <!-- Canvas overlay para áreas de firma -->
+        <canvas 
+          #signatureCanvas
+          class="signature-canvas-overlay"
+          [class.drawing-mode]="isDefiningArea"
+          (mousedown)="onCanvasMouseDown($event)"
+          (mousemove)="onCanvasMouseMove($event)"
+          (mouseup)="onCanvasMouseUp($event)"
+          (mouseleave)="onCanvasMouseUp($event)"
+          (touchstart)="onCanvasTouchStart($event)"
+          (touchmove)="onCanvasTouchMove($event)"
+          (touchend)="onCanvasTouchEnd($event)">
+        </canvas>
+
+        <!-- Indicador de modo de definición -->
+        <div class="drawing-indicator" [class.active]="showDrawingIndicator">
+          <mat-icon>draw</mat-icon>
+          <span>Modo: Definir área de firma para {{ getPartyName(currentDefiningPartyId!) }}</span>
+          <div class="drawing-instructions">
+            Arrastra para dibujar el área rectangular
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

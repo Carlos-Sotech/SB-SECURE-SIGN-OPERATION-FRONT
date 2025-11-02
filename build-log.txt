@@ -1,0 +1,15 @@
+[19/09/2025 18:36:49,55] Iniciando build del frontend 
+[19/09/2025 18:36:49,56] Directorio actual: c:\Users\pablo\Downloads\rutas 
+[19/09/2025 18:36:49,58] Directorio dist limpiado 
+
+up to date, audited 978 packages in 2s
+
+158 packages are looking for funding
+  run `npm fund` for details
+
+8 low severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.

@@ -1,0 +1,439 @@
+/* src/app/components/operation-list/operation-list.component.css */
+
+.admin-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.admin-toolbar {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.admin-sidenav-container {
+  flex: 1;
+  height: calc(100vh - 64px); /* Altura total menos la toolbar */
+  overflow: hidden;
+}
+
+.admin-sidenav {
+  width: 240px;
+  border-right: 1px solid rgba(0,0,0,0.12);
+}
+
+.admin-sidenav mat-nav-list .mat-mdc-list-item .mdc-list-item__primary-text { }
+.admin-sidenav mat-nav-list mat-icon { margin-right: 16px; }
+.admin-sidenav .active-nav-item {
+  background-color: rgba(0, 0, 0, 0.04);
+  font-weight: 500;
+}
+
+.admin-sidenav-content {
+  height: 100%;
+  overflow: hidden;
+}
+
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.welcome-message {
+  margin: 8px 16px;
+  padding: 8px 12px;
+  background-color: #e3f2fd;
+  border-left: 4px solid var(--mat-primary-main-color, #3f51b5);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.welcome-message p { 
+  margin: 0; 
+  font-size: 1em; 
+}
+
+/* Dashboard Cards */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.card-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-right: 16px;
+  color: var(--mat-primary-main-color, #3f51b5);
+}
+
+.card-icon.pending {
+  color: var(--mat-warn-main-color, #f44336);
+}
+
+.card-icon.in-progress {
+  color: var(--mat-accent-main-color, #ff4081);
+}
+
+.card-icon.completed {
+  color: #4caf50;
+}
+
+.card-icon.local {
+  color: var(--mat-primary-main-color, #3f51b5);
+}
+
+.card-icon.app {
+  color: var(--mat-accent-main-color, #ff4081);
+}
+
+.card-icon.remote {
+  color: #4caf50;
+}
+
+.card-text h3 {
+  margin: 0;
+  font-size: 2em;
+  font-weight: 500;
+  color: var(--mat-primary-main-color, #3f51b5);
+}
+
+.card-text p {
+  margin: 5px 0 0 0;
+  color: rgba(0,0,0,0.6);
+  font-size: 0.9em;
+}
+
+/* Data Card */
+.data-card {
+  width: 100%;
+  margin: 8px 0;
+  overflow: visible;
+}
+
+.data-card mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.auto-refresh-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 16px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  font-size: 12px;
+  color: #4caf50;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.auto-refresh-indicator:hover:not(:disabled) {
+  background-color: rgba(76, 175, 80, 0.2);
+  transform: scale(1.05);
+}
+
+.auto-refresh-indicator.disabled {
+  background-color: rgba(158, 158, 158, 0.1);
+  border: 1px solid rgba(158, 158, 158, 0.3);
+  color: #9e9e9e;
+}
+
+.auto-refresh-indicator:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auto-refresh-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.auto-refresh-icon.spinning {
+  animation: spin 2s linear infinite;
+}
+
+.auto-refresh-text {
+  font-weight: 500;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.data-card mat-card-content {
+  overflow: visible !important;
+  padding: 0;
+}
+
+.spinner-container,
+.error-message-data,
+.empty-state-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.spinner-container p,
+.error-message-data p,
+.empty-state-data p {
+  margin-top: 12px;
+  font-size: 1em;
+  color: rgba(0,0,0,0.6);
+}
+
+.error-message-data mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: var(--mat-warn-main-color, #f44336);
+}
+
+.empty-state-data .empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: rgba(0,0,0,0.3);
+  margin-bottom: 12px;
+}
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  margin: 0;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 1200px; /* Asegurar que todas las columnas sean visibles */
+}
+
+.data-table .mat-mdc-header-cell {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.7);
+  padding: 12px 8px;
+}
+
+.data-table .mat-mdc-cell {
+  font-size: 13px;
+  padding: 8px;
+}
+
+/* Asegurar que la columna de descripción sea visible */
+.data-table .mat-column-descripcionOperacion {
+  min-width: 200px !important;
+  max-width: 300px;
+  word-wrap: break-word;
+  display: table-cell !important;
+  visibility: visible !important;
+}
+
+.data-table .mat-mdc-header-cell.mat-column-descripcionOperacion {
+  min-width: 200px !important;
+  display: table-cell !important;
+  visibility: visible !important;
+}
+
+.data-table .mat-mdc-row:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+
+.actions-header { 
+  text-align: center !important;
+  width: 400px;
+  min-width: 400px;
+}
+
+.actions-cell { 
+  text-align: center !important;
+  width: 400px;
+  min-width: 400px;
+  white-space: nowrap;
+}
+
+.mat-mdc-table .mat-mdc-cell.actions-cell button:not(:last-child),
+.mat-mdc-table .mat-mdc-header-cell.actions-header button:not(:last-child) {
+  margin-right: 8px;
+}
+
+/* Asegurar que los botones estén siempre en línea */
+.actions-cell .mat-mdc-button,
+.actions-cell .mat-mdc-icon-button {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+
+/* Estilos para los iconos dentro de los botones */
+.actions-cell .mat-mdc-icon-button mat-icon {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+}
+
+/* Operation specific styles */
+.operation-name {
+  display: flex;
+  flex-direction: column;
+}
+
+.operation-name .description {
+  color: rgba(0,0,0,0.6);
+  font-size: 0.85em;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .card-icon {
+    margin: 0 0 16px 0;
+  }
+
+  .content-wrapper {
+    padding: 0 8px;
+  }
+
+  .welcome-message {
+    margin: 8px;
+  }
+
+  .data-table .mat-mdc-header-cell,
+  .data-table .mat-mdc-cell {
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-cards {
+    gap: 16px;
+  }
+
+  .admin-sidenav-content {
+    padding: 4px;
+  }
+}
+
+/* Estilos para el botón de ver operación */
+.actions-cell button[matTooltip="Ver Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Ver Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+/* Estilos para el botón de lanzar operación */
+.actions-cell button[matTooltip="Lanzar Operación"] {
+  color: #ff4081 !important;
+}
+
+.actions-cell button[matTooltip="Lanzar Operación"]:hover {
+  background-color: rgba(255, 64, 129, 0.1) !important;
+}
+
+/* Estilos para el botón de editar */
+.actions-cell button[matTooltip="Editar Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Editar Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+/* Estilos para el botón de eliminar */
+.actions-cell button[matTooltip="Eliminar Operación"] {
+  color: #f44336 !important;
+}
+
+.actions-cell button[matTooltip="Eliminar Operación"]:hover {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+/* Estilos para el botón de relanzar operación */
+.actions-cell button[matTooltip="Relanzar Operación"] {
+  color: #1976d2 !important;
+}
+
+.actions-cell button[matTooltip="Relanzar Operación"]:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+} 
+
+/* Pagination styles */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background-color: #fafafa;
+  border-top: 1px solid rgba(0,0,0,0.12);
+}
+
+.pagination-container mat-paginator {
+  background: transparent;
+}
+
+/* Remove load more styles that are no longer needed */
+.load-more-container,
+.load-more-trigger,
+.no-more-results {
+  display: none;
+} 

@@ -1,0 +1,59 @@
+.register-container { max-width: 500px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+.register-container h2 { text-align: center; margin-bottom: 20px; }
+.register-container div { margin-bottom: 15px; }
+.register-container label { display: block; margin-bottom: 5px; font-weight: bold; }
+.register-container input[type="text"],
+.register-container input[type="email"],
+.register-container select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+.register-container input[type="checkbox"] { margin-right: 5px; vertical-align: middle; }
+.register-container button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+.register-container button:disabled { background-color: #ccc; }
+.error { color: red; font-size: 0.9em; margin-top: 3px; }
+.success-message { color: green; margin-top: 15px; padding: 10px; border: 1px solid green; background-color: #e6ffe6; border-radius: 4px; }
+.error-message { color: red; margin-top: 15px; padding: 10px; border: 1px solid red; background-color: #ffe6e6; border-radius: 4px; }
+
+/* Estilos para el header del formulario de registro */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 0;
+  position: relative;
+}
+
+/* mat-card-title ajustado */
+mat-card-title {
+  margin: 0;
+  padding: 16px 24px;
+  flex: 1;
+}
+
+/* Estilos para el botón de cerrar - pegado al borde derecho superior con círculo azul */
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: white; /* Icono blanco */
+  background-color: #1976d2; /* Círculo azul */
+  border-radius: 50%; /* Hace el círculo perfecto */
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: #1565c0; /* Azul más oscuro en hover */
+  transform: scale(1.05);
+}
+
+.close-button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

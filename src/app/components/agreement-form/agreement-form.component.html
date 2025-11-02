@@ -1,0 +1,36 @@
+<div class="agreement-form-container">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+    {{ isEditMode ? 'Editar Acuerdo' : 'Nuevo Acuerdo' }}
+    <button mat-icon-button type="button" (click)="onCancel()" style="float: right;" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </h2>
+
+  <div class="form-content-scroll">
+    <form [formGroup]="agreementForm" (ngSubmit)="onSubmit()">
+      <div class="form-section">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Texto del Acuerdo</mat-label>
+            <textarea matInput formControlName="text" rows="6"
+                      placeholder="Texto del acuerdo que debe aceptar el usuario"></textarea>
+            <mat-error *ngIf="agreementForm.get('text')?.hasError('required')">
+              El texto del acuerdo es requerido
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+    <button mat-raised-button color="primary" type="submit"
+            [disabled]="!agreementForm.valid || isSubmitting" (click)="onSubmit()">
+      <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+      <span *ngIf="!isSubmitting">{{ isEditMode ? 'Actualizar' : 'Crear' }}</span>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,108 @@
+<div class="auth-page-container">
+  <mat-card class="auth-card">
+    <div class="dialog-header">
+      <mat-card-title>{{ isPrivilegedRegistering ? 'Registrar Nuevo Usuario' : 'Crea tu Cuenta' }}</mat-card-title>
+      <!-- Botón de cerrar solo para administradores -->
+      <button *ngIf="isPrivilegedRegistering" mat-icon-button class="close-button" (click)="onCancel()" aria-label="Cerrar diálogo">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <mat-card-content>
+      <p class="description-text" *ngIf="isPrivilegedRegistering && loggedInUser">
+        Estás registrando un nuevo usuario como {{ loggedInUser.role }}.
+        <span *ngIf="loggedInUser.role === Role.Superusuario && loggedInUser.companyId">
+          Los nuevos usuarios se asociarán a tu empresa: <strong>{{ getSuperUserCompanyName() || 'Asignada' }}</strong>.
+        </span>
+        <span *ngIf="loggedInUser.role === Role.Superusuario && !loggedInUser.companyId" class="error-text">
+          <br><strong>Advertencia:</strong> No tienes una empresa asignada. No podrás crear usuarios hasta que un administrador te asigne una.
+        </span>
+      </p>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre de Usuario (Mínimo 5 caracteres)</mat-label>
+          <input matInput formControlName="username" required autocomplete="off" placeholder="juan.perez">
+          <mat-error *ngIf="fc['username']?.touched && fc['username']?.errors?.['required']">
+            Nombre de usuario es requerido.
+          </mat-error>
+          <mat-error *ngIf="fc['username']?.touched && fc['username']?.errors?.['minlength']">
+            Debe tener al menos {{ fc['username'].errors?.['minlength'].requiredLength }} caracteres.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" required autocomplete="off" placeholder="usuario@ejemplo.com">
+          <mat-error *ngIf="fc['email']?.touched && fc['email']?.errors?.['required']">
+            Email es requerido.
+          </mat-error>
+          <mat-error *ngIf="fc['email']?.touched && fc['email']?.errors?.['email']">
+            Formato de email inválido.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rol del Nuevo Usuario</mat-label>
+          <mat-select formControlName="role" required [disabled]="canOnlyCreateUserRole">
+            <mat-option *ngIf="availableRoles.length === 0 && !canOnlyCreateUserRole" [disabled]="true">Cargando roles...</mat-option>
+            <mat-option *ngFor="let roleOpt of availableRoles" [value]="roleOpt.value">
+              {{ roleOpt.viewValue }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="fc['role']?.touched && fc['role']?.errors?.['required']">
+            Rol es requerido.
+          </mat-error>
+          <mat-hint *ngIf="canOnlyCreateUserRole && isPrivilegedRegistering && loggedInUser?.role === Role.Superusuario">
+            Solo puedes crear usuarios con rol 'Usuario'.
+          </mat-hint>
+        </mat-form-field>
+
+        <!-- Campo de Empresa: Visible si el rol del NUEVO usuario lo requiere,
+             y no es un Superusuario quien registra (porque para él está fijado) -->
+        <mat-form-field
+            *ngIf="isCompanyRequired() && !(isPrivilegedRegistering && loggedInUser?.role === Role.Superusuario)"
+            appearance="outline" class="full-width">
+          <mat-label>Empresa</mat-label>
+          <mat-select formControlName="companyId" [required]="isCompanyRequired()">
+            <mat-option *ngIf="isLoadingCompanies" [disabled]="true">
+              Cargando empresas...
+            </mat-option>
+            <mat-option *ngIf="!isLoadingCompanies && companies.length === 0" [disabled]="true">
+              No hay empresas disponibles
+            </mat-option>
+            <mat-option *ngFor="let company of companies" [value]="company.id">
+              {{ company.name }} ({{ company.id }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="fc['companyId']?.touched && fc['companyId']?.errors?.['required']">
+            Empresa es requerida para este rol.
+          </mat-error>
+        </mat-form-field>
+        <!-- Campo oculto para companyId si es Superusuario y tiene empresa -->
+        <input type="hidden" formControlName="companyId" *ngIf="isPrivilegedRegistering && loggedInUser?.role === Role.Superusuario && loggedInUser?.companyId">
+
+
+        <div class="button-container">
+          <button mat-raised-button color="primary" type="submit"
+                  [disabled]="registerForm.invalid || isLoading || (isPrivilegedRegistering && loggedInUser?.role === Role.Superusuario && !loggedInUser?.companyId)"
+                  class="full-width">
+            <span *ngIf="!isLoading">{{ isPrivilegedRegistering ? 'Registrar Usuario' : 'Crear Cuenta' }}</span>
+            <mat-spinner *ngIf="isLoading" diameter="24" style="margin: 0 auto;"></mat-spinner>
+          </button>
+          
+          <!-- Botón Cancelar solo para administradores -->
+          <button mat-stroked-button type="button" 
+                  (click)="onCancel()" 
+                  [disabled]="isLoading"
+                  *ngIf="isPrivilegedRegistering"
+                  class="full-width cancel-button">
+            Cancelar
+          </button>
+        </div>
+      </form>
+
+      <div class="extra-links" *ngIf="!isPrivilegedRegistering">
+        <p>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión aquí</a></p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,108 @@
+<!-- Usamos mat-dialog-title, content y actions en lugar de mat-card -->
+<div class="dialog-header">
+  <h2 mat-dialog-title>{{ dialogTitle }}</h2>
+  <!-- Opcional: Puedes añadir un botón de cerrar en la esquina -->
+  <button mat-icon-button class="close-button" (click)="onCancel()" aria-label="Cerrar diálogo">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- mat-dialog-content es el área que tendrá el scroll si es necesario -->
+<mat-dialog-content class="dialog-content-scrollable">
+  <form [formGroup]="companyForm" class="company-form-grid">
+
+    <!-- Nombre -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre de Empresa</mat-label>
+      <input matInput formControlName="name" required placeholder="Ej: Empresa S.L.">
+      <mat-error *ngIf="fc['name'].touched && fc['name'].errors?.['required']">
+        El nombre es obligatorio.
+      </mat-error>
+      <mat-error *ngIf="fc['name'].errors?.['maxlength']">
+        Máximo 150 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- CIF/NIF -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>CIF/NIF</mat-label>
+      <input matInput formControlName="taxId" placeholder="Ej: B12345678">
+      <mat-error *ngIf="fc['taxId'].errors?.['maxlength']">
+        Máximo 20 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Dirección -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="addressLine1" placeholder="Calle, número, piso">
+      <mat-error *ngIf="fc['addressLine1'].errors?.['maxlength']">
+        Máximo 255 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Ciudad -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Ciudad</mat-label>
+      <input matInput formControlName="city" placeholder="Ej: Madrid">
+      <mat-error *ngIf="fc['city'].errors?.['maxlength']">
+        Máximo 100 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Provincia -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Provincia</mat-label>
+      <input matInput formControlName="stateOrProvince" placeholder="Ej: Madrid">
+      <mat-error *ngIf="fc['stateOrProvince'].errors?.['maxlength']">
+        Máximo 100 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Teléfono -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Teléfono</mat-label>
+      <input matInput formControlName="phoneNumber" type="tel" placeholder="Ej: 912345678">
+      <mat-error *ngIf="fc['phoneNumber'].errors?.['maxlength']">
+        Máximo 20 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Email -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email de Contacto</mat-label>
+      <input matInput formControlName="email" type="email" placeholder="contacto@empresa.com">
+      <mat-error *ngIf="fc['email'].errors?.['email']">
+        Formato de email inválido.
+      </mat-error>
+      <mat-error *ngIf="fc['email'].errors?.['maxlength']">
+        Máximo 150 caracteres.
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Número de agentes -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Número de Agentes</mat-label>
+      <input matInput formControlName="numberOfAgents" type="number" min="0">
+      <mat-error *ngIf="fc['numberOfAgents'].errors?.['required']">
+        Campo obligatorio.
+      </mat-error>
+      <mat-error *ngIf="fc['numberOfAgents'].errors?.['min']">
+        No puede ser negativo.
+      </mat-error>
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+
+<!-- mat-dialog-actions es el contenedor para los botones fijos -->
+<mat-dialog-actions align="end" class="dialog-actions-sticky">
+  <div *ngIf="isLoading" class="spinner-container">
+    <mat-spinner diameter="24"></mat-spinner>
+    <span>Guardando...</span>
+  </div>
+  <button mat-stroked-button (click)="onCancel()" [disabled]="isLoading">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSave()" [disabled]="isLoading || companyForm.invalid">
+    {{ isEditMode ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

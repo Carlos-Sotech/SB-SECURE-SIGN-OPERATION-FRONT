@@ -1,0 +1,110 @@
+.pdf-signature-areas-container {
+  position: relative;
+  width: 100%;
+  min-width: 280px; /* Ancho mínimo para evitar que se oculte en pantallas pequeñas */
+  height: 80vh;
+  min-height: 200px; /* Altura mínima */
+  display: block !important;
+  visibility: visible !important;
+}
+
+.signature-canvas-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  min-width: 280px; /* Ancho mínimo para evitar que se oculte */
+  min-height: 200px; /* Altura mínima */
+  pointer-events: none; /* Por defecto no captura eventos */
+  z-index: 10;
+  background: transparent;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.signature-canvas-overlay.drawing-mode {
+  pointer-events: auto; /* Solo captura eventos cuando está en modo dibujo */
+}
+
+/* Indicador visual cuando está en modo de asignar área */
+.drawing-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 20;
+  display: none;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  min-width: 200px;
+}
+
+.drawing-indicator.active {
+  display: block;
+  animation: slideIn 0.3s ease-out;
+}
+
+.drawing-indicator mat-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.drawing-instructions {
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Anotación de error de procesamiento */
+.processing-error-annotation {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 25;
+  background: rgba(244, 67, 54, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  border: 2px solid #F44336;
+  min-width: 200px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.processing-error-annotation .error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.processing-error-annotation mat-icon {
+  margin-right: 8px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.processing-error-annotation span {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.processing-error-annotation small {
+  font-size: 12px;
+  opacity: 0.9;
+} 

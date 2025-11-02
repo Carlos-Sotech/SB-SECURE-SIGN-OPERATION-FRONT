@@ -1,0 +1,34 @@
+<div class="pdf-signature-areas-container" (click)="$event.stopPropagation()">
+  <ngx-extended-pdf-viewer
+    [src]="processedPdfUrl || pdfUrl"
+    useBrowserLocale="true"
+    [height]="'80vh'"
+    [textLayer]="true">
+  </ngx-extended-pdf-viewer>
+  
+  <!-- Indicador de modo de dibujo -->
+  <div class="drawing-indicator" [class.active]="activePartyId !== null">
+    <mat-icon>draw</mat-icon>
+    <span>Modo: Asignar área de firma</span>
+    <div class="drawing-instructions">
+      Arrastra para dibujar el área rectangular
+    </div>
+  </div>
+  
+  <canvas #canvas
+    class="signature-canvas-overlay"
+    [class.drawing-mode]="activePartyId !== null"
+    (mousedown)="onMouseDown($event)"
+    (mousemove)="onMouseMove($event)"
+    (mouseup)="onMouseUp($event)">
+  </canvas>
+  
+  <!-- Anotación de error de procesamiento -->
+  <div *ngIf="showProcessingError" class="processing-error-annotation">
+    <div class="error-content">
+      <mat-icon color="warn">warning</mat-icon>
+      <span>Error procesando firmas</span>
+      <small>Mostrando PDF original</small>
+    </div>
+  </div>
+</div> 
