@@ -16,6 +16,7 @@ out/
 .env.production
 .env.development
 .env.backend
+src/assets/env.js
 
 # Logs
 logs/

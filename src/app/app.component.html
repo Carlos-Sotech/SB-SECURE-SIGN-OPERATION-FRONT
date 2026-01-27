@@ -176,13 +176,26 @@
     }
   }
 </style>
-<!--
-<nav>
-  <a routerLink="/">Inicio</a>
-  <a routerLink="/registro">Registro</a>
-  <a routerLink="/set-password">Set Password</a>
-</nav>
--->
+
+<!-- Header con logo, usuario y botón de logout -->
+<mat-toolbar class="header-toolbar" *ngIf="isAuthenticated$ | async">
+  <div class="header-left">
+    <img src="assets/SotechBiometricsTransparent.png" alt="Sotech Biometrics" class="logo">
+  </div>
+  <div class="header-center" *ngIf="currentUser$ | async as user">
+    <span class="user-name">
+      {{ user.username }}
+      <span *ngIf="user.role === 'Administrador'" class="user-role"> - Administrador</span>
+      <span [class]="user.role === 'Administrador' ? 'company-name' : ''" *ngIf="user.companyName"> - {{ user.companyName }}</span>
+    </span>
+  </div>
+  <div class="header-right">
+    <button mat-raised-button color="primary" (click)="logout()" class="logout-button">
+      <mat-icon>logout</mat-icon>
+      Cerrar Sesión
+    </button>
+  </div>
+</mat-toolbar>
 <router-outlet></router-outlet>
 
 

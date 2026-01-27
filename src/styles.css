@@ -1,3 +1,7 @@
+/* Asegura que el contenido de router-outlet comience debajo de la cabecera */
+body, app-root, .app-root, .main-content-root {
+  box-sizing: border-box;
+}
 /* Fuente y colores generales */
 @font-face {
   font-family: 'Segoe UI';
@@ -171,7 +175,7 @@ body, * {
 
 /* Menús y diálogos */
 .mat-menu-panel, .mat-dialog-container {
-  border-radius: 6px;
+  border-radius: 4px;
   background: white;
   box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
 }

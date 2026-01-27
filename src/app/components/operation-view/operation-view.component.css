@@ -14,7 +14,6 @@
   align-items: center;
   justify-content: center;
   min-width: 320px;
-  max-width: 900px;
   width: 100%;
   background: #fff;
   border-radius: 12px;
@@ -25,6 +24,7 @@
   box-sizing: border-box;
   /* Agregar padding inferior para evitar que el contenido se oculte */
   padding-bottom: 40px;
+  overflow-y: hidden;
 }
 
 .operation-view-container h2 {
@@ -315,21 +315,6 @@
   padding-bottom: 0 !important;
   box-sizing: border-box;
 }
-/*
-.pdf-viewer-container {
-  position: relative !important;
-  width: 100%;
-  max-width: 600px;
-  height: 80vh;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  margin: 0 auto;
-  
-  padding-bottom: 20px;
-  box-sizing: border-box;
-}
-  */
 
 /* Asegurar que el contenido del PDF se adapte a su altura real */
 ::ng-deep .pdf-viewer #viewerContainer {

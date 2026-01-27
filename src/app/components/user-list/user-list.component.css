@@ -3,66 +3,34 @@
 .admin-page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Ocupa toda la altura de la ventana */
-  overflow: hidden; /* Evita scrollbars dobles si el contenido del sidenav es largo */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-/* Estilo para el elemento de navegación activo */
-.active-nav-item {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  font-weight: 500 !important;
-}
-
-.active-nav-item .mat-icon {
-  color: #1976d2 !important;
+  height: calc(100vh - 80px);
+  overflow: hidden;
 }
 
 .admin-toolbar {
-  flex-shrink: 0; /* Evita que el toolbar se encoja */
-  position: sticky; /* O fixed, si prefieres */
-  top: 0;
-  z-index: 100; /* Para que esté por encima del contenido */
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+  z-index: 100;
 }
 
 .toolbar-spacer {
-  flex: 1 1 auto; /* Empuja elementos a los lados */
+  flex: 1 1 auto;
 }
 
-.admin-sidenav-container {
-  flex-grow: 1; /* Ocupa el espacio restante */
-  /* Considera un color de fondo para el contenedor del sidenav si el tema no lo cubre */
-  /* background-color: #f5f5f5; */
-}
-
-.admin-sidenav {
-  width: 240px; /* Ancho del menú lateral, ajusta según necesidad */
-  border-right: 1px solid rgba(0,0,0,0.12); /* Borde sutil */
-  height: 100vh; /* Altura completa de la ventana */
-  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
-}
-
-.admin-sidenav mat-nav-list .mat-mdc-list-item .mdc-list-item__primary-text {
-    /* Estilos para el texto del item si es necesario */
-}
-.admin-sidenav mat-nav-list mat-icon {
-    margin-right: 16px; /* Espacio entre icono y texto */
-}
-
-
-.admin-sidenav-content {
-  padding: 20px;
-  /* background-color: #fafafa; */ /* Fondo para el área de contenido */
-  overflow-y: auto; /* Permite scroll si el contenido es más alto que la ventana */
+.admin-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  width: 100%;
+  background-color: #fafafa;
 }
 
 .content-wrapper {
-  max-width: 1200px; /* O el ancho que prefieras para el contenido principal */
-  margin: 0 auto; /* Centra el contenido si es más estrecho que el sidenav-content */
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .welcome-message {
@@ -80,6 +48,7 @@
 /* Estilos para las pestañas */
 .admin-tabs {
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .admin-tabs .mat-mdc-tab-group {
@@ -88,16 +57,65 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.admin-tabs .mdc-tab {
+  min-width: 160px;
+  height: 48px;
+}
+
+.admin-tabs .mdc-tab__text-label {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Asegurar visibilidad del mat-tab-group */
+mat-tab-group {
+  display: block !important;
+  visibility: visible !important;
+}
+
+.mat-mdc-tab-labels {
+  background-color: #f5f5f5;
+}
+
+.mat-mdc-tab-label {
+  opacity: 1 !important;
+}
+
 .users-card,
-.operations-card {
+.operations-card,
+.companies-card {
   width: 100%;
+  margin-bottom: 24px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.users-card mat-card-content,
+.operations-card mat-card-content,
+.companies-card mat-card-content {
+  padding: 0 !important;
 }
 
 .users-card mat-card-header,
-.operations-card mat-card-header {
+.operations-card mat-card-header,
+.companies-card mat-card-header {
   display: flex;
-  justify-content: space-between; /* Para alinear título a la izq y botón a la der */
+  justify-content: space-between;
   align-items: center;
+  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.users-card mat-card-title,
+.operations-card mat-card-title,
+.companies-card mat-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
 }
 
 .spinner-container,
@@ -139,30 +157,62 @@
 }
 
 
+.users-card mat-card-content,
+.operations-card mat-card-content {
+  padding: 0;
+}
+
 .table-container {
-  overflow-x: auto; /* Permite scroll horizontal en la tabla si es muy ancha */
+  overflow-x: auto;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .users-table,
 .operations-table,
 .data-table {
   width: 100%;
+  border-collapse: collapse;
+  background: white;
 }
 
+/* Estilos modernos para encabezados de tabla */
+.users-table .mat-mdc-header-cell,
+.operations-table .mat-mdc-header-cell,
 .data-table .mat-mdc-header-cell {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(0,0,0,0.7);
-  padding: 12px 8px;
+  background: #f5f5f5;
+  color: #424242 !important;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 16px 12px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
+/* Estilos para las celdas */
+.users-table .mat-mdc-cell,
+.operations-table .mat-mdc-cell,
 .data-table .mat-mdc-cell {
-  font-size: 13px;
-  padding: 8px;
+  font-size: 14px;
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
+/* Efecto hover en filas */
+.users-table .mat-mdc-row:hover,
+.operations-table .mat-mdc-row:hover,
 .data-table .mat-mdc-row:hover {
-  background-color: rgba(0,0,0,0.02);
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Filas alternas */
+.users-table .mat-mdc-row:nth-child(even),
+.operations-table .mat-mdc-row:nth-child(even),
+.data-table .mat-mdc-row:nth-child(even) {
+  background-color: #fafafa;
 }
 
 /* Estilos para las celdas de acciones si es necesario */
@@ -240,9 +290,34 @@
 }
 
 /* Responsive design */
+@media (max-width: 1024px) {
+  .content-wrapper {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+  
+  .users-table .mat-mdc-header-cell,
+  .operations-table .mat-mdc-header-cell,
+  .data-table .mat-mdc-header-cell {
+    font-size: 12px;
+    padding: 12px 8px;
+  }
+  
+  .users-table .mat-mdc-cell,
+  .operations-table .mat-mdc-cell,
+  .data-table .mat-mdc-cell {
+    font-size: 12px;
+    padding: 12px 8px;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-sidenav {
     width: 200px;
+  }
+  
+  .admin-sidenav-content {
+    padding: 15px;
   }
   
   .content-wrapper {
@@ -252,6 +327,17 @@
   
   .table-container {
     font-size: 0.9em;
+    border-radius: 4px;
+  }
+  
+  .users-card mat-card-header,
+  .operations-card mat-card-header {
+    padding: 15px;
+  }
+  
+  .users-card mat-card-title,
+  .operations-card mat-card-title {
+    font-size: 18px;
   }
   
   .mat-mdc-table .mat-mdc-cell.mat-column-actions button {
@@ -263,6 +349,11 @@
     width: 100%;
     justify-content: center;
   }
+  
+  /* Ocultar columnas menos importantes en móviles */
+  .mat-column-createdAt {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -272,10 +363,36 @@
   
   .welcome-message {
     font-size: 0.9em;
+    padding: 8px;
   }
   
   .table-container {
     font-size: 0.8em;
+  }
+  
+  .users-table .mat-mdc-header-cell,
+  .operations-table .mat-mdc-header-cell,
+  .data-table .mat-mdc-header-cell {
+    font-size: 11px;
+    padding: 10px 6px;
+  }
+  
+  .users-table .mat-mdc-cell,
+  .operations-table .mat-mdc-cell,
+  .data-table .mat-mdc-cell {
+    font-size: 11px;
+    padding: 10px 6px;
+  }
+  
+  /* Ocultar más columnas en pantallas muy pequeñas */
+  .mat-column-companyName,
+  .mat-column-email {
+    display: none;
+  }
+  
+  .users-card mat-card-title,
+  .operations-card mat-card-title {
+    font-size: 16px;
   }
 }
 
@@ -382,4 +499,37 @@
 .load-more-trigger,
 .no-more-results {
   display: none;
+}
+
+/* Estilos para la tabla de empresas ya están incluidos arriba con .companies-card */
+
+.error-message-companies,
+.empty-state-companies {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-message-companies mat-icon,
+.empty-state-companies mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #dc3545;
+  margin-bottom: 16px;
+}
+
+.empty-state-companies mat-icon {
+  color: #6c757d;
+}
+
+.error-message-companies p,
+.empty-state-companies p {
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
 }

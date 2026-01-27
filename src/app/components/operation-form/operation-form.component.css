@@ -8,33 +8,31 @@
 }
 
 .operation-form-container {
-  margin: 0 auto;
+  margin: auto auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-width: 320px;
-  max-width: 900px;
   width: 100%;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 4px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 24px 32px 32px 32px;
+  overflow-y: hidden;
 }
 
 .operation-form-container h2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
   color: var(--mat-primary-main-color, #3f51b5);
+  flex-shrink: 0;
 }
 
 .operation-form-container h3 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
   color: var(--mat-primary-main-color, #3f51b5);
   font-size: 1.1em;
   font-weight: 500;
@@ -44,34 +42,56 @@
   color: var(--mat-primary-main-color, #3f51b5);
 }
 
+/* Form element */
+.operation-form-container form {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 /* Form Sections */
 .form-section {
-  margin-bottom: 18px;
-  padding: 12px;
+  margin: 0;
+  padding: 0;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fafafa;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
   width: 100%;
+  flex: 1;
+  padding-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.form-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
 }
 
 .section-header h3 {
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #333;
 }
 
 .section-header mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
 }
 
 /* Mensaje informativo para operaciones remotas */
@@ -105,19 +125,24 @@
 }
 
 .form-row {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .expiration-info {
-  margin-top: 4px;
+  margin-top: 8px;
   margin-left: 16px;
   color: #666;
   font-style: italic;
+  font-size: 13px;
+  padding: 8px 12px;
+  background-color: #f0f7ff;
+  border-radius: 4px;
+  border-left: 3px solid #2196f3;
 }
 
 .expiration-info small {
-  color: #888;
-  font-size: 12px;
+  color: #1976d2;
+  font-size: 13px;
 }
 
 .form-row.two-columns {
@@ -155,22 +180,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 40px 20px;
-  color: #666;
+  gap: 20px;
+  padding: 48px 24px;
+  color: #888;
   text-align: center;
+  background-color: #fafafa;
+  border-radius: 4px;
+  border: 2px dashed #e0e0e0;
 }
 
 .empty-state mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: #ccc;
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #bdbdbd;
 }
 
 .empty-state p {
   margin: 0;
   font-size: 16px;
+  font-weight: 500;
 }
 
 /* Agreements List */
@@ -181,29 +210,38 @@
 }
 
 .agreement-card {
-  margin-bottom: 8px;
-  padding: 8px 12px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agreement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .agreement-card mat-card-header {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .agreement-card mat-card-title {
-  font-size: 1em;
+  font-size: 1.1em;
+  font-weight: 600;
 }
 
 .agreement-text {
   margin: 12px 0;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #333;
   max-height: 100px;
   overflow-y: auto;
-  padding: 8px;
+  padding: 12px 16px;
   background-color: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e9ecef;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .agreement-card mat-card-actions {
@@ -220,16 +258,25 @@
 }
 
 .party-card {
-  margin-bottom: 8px;
-  padding: 8px 12px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.party-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .party-card mat-card-header {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .party-card mat-card-title {
-  font-size: 1em;
+  font-size: 1.1em;
+  font-weight: 600;
 }
 
 .party-info {
@@ -237,13 +284,15 @@
 }
 
 .party-info p {
-  margin: 4px 0;
-  font-size: 13px;
+  margin: 6px 0;
+  font-size: 14px;
   color: #555;
+  line-height: 1.6;
 }
 
 .party-info strong {
   color: #333;
+  font-weight: 600;
 }
 
 .party-texts {
@@ -272,11 +321,103 @@
 
 /* PDF Section */
 .pdf-section {
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .pdf-input-container {
+  margin-bottom: 20px;
+}
+
+.pdf-input-container label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  display: block;
   margin-bottom: 16px;
+}
+
+/* Zona de drag and drop */
+.pdf-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border: 3px dashed #ef5350;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 280px;
+}
+
+.pdf-dropzone:hover {
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
+  border-color: #e53935;
+  transform: scale(1.01);
+  box-shadow: 0 8px 24px rgba(239, 83, 80, 0.2);
+}
+
+.pdf-dropzone.drag-over {
+  background: linear-gradient(135deg, #ef9a9a 0%, #e57373 100%);
+  border-color: #c62828;
+  border-width: 4px;
+  transform: scale(1.02);
+  box-shadow: 0 12px 32px rgba(239, 83, 80, 0.3);
+}
+
+.pdf-dropzone .upload-icon {
+  font-size: 72px;
+  width: 72px;
+  height: 72px;
+  color: #e53935;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.pdf-dropzone .dropzone-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #c62828;
+  margin: 0 0 12px 0;
+}
+
+.pdf-dropzone .dropzone-subtitle {
+  font-size: 14px;
+  color: #d32f2f;
+  margin: 8px 0 16px 0;
+  font-weight: 500;
+}
+
+.pdf-dropzone .browse-btn {
+  margin: 8px 0 20px 0;
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.25);
+  transition: all 0.3s ease;
+}
+
+.pdf-dropzone .browse-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 83, 80, 0.35);
+}
+
+.pdf-dropzone .dropzone-hint {
+  font-size: 12px;
+  color: #b71c1c;
+  margin: 0;
+  font-style: italic;
 }
 
 .file-input-wrapper {
@@ -288,34 +429,81 @@
 
 .file-input-wrapper input[type="file"] {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
   border-radius: 4px;
   background-color: white;
+  font-size: 14px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.file-input-wrapper input[type="file"]:hover {
+  border-color: #2196f3;
+}
+
+.file-input-wrapper input[type="file"]:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
 .clear-pdf-btn {
-  margin-left: 8px;
+  margin-left: auto;
+  color: #e53935;
+}
+
+.clear-pdf-btn:hover {
+  background-color: rgba(239, 83, 80, 0.1);
 }
 
 .file-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #e3f2fd;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   border-radius: 4px;
-  border: 1px solid #bbdefb;
+  border: 2px solid #90caf9;
+  box-shadow: 0 3px 8px rgba(33, 150, 243, 0.15);
+  transition: all 0.3s ease;
+  animation: slideIn 0.4s ease;
+}
+
+.file-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.25);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .file-info mat-icon {
-  color: #1976d2;
+  color: #1565c0;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.file-info span:first-of-type {
+  flex: 1;
+  font-weight: 600;
+  color: #1565c0;
+  font-size: 15px;
 }
 
 .file-size {
-  color: #666;
-  font-size: 12px;
+  color: #757575;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* PDF Loading */
@@ -323,12 +511,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 20px;
-  background-color: #f5f5f5;
+  gap: 20px;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  margin-top: 16px;
+  border: 2px dashed #bdbdbd;
+  margin-top: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .pdf-loading mat-spinner {
@@ -336,50 +534,118 @@
 }
 
 .pdf-loading span {
-  color: #666;
-  font-size: 14px;
+  color: #424242;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* PDF No File */
 .pdf-no-file {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
-  background-color: #f5f5f5;
+  gap: 16px;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  margin-top: 16px;
-  color: #666;
+  border: 2px dashed #e0e0e0;
+  margin-top: 20px;
+  color: #757575;
+  text-align: center;
 }
 
 .pdf-no-file mat-icon {
-  color: #999;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  color: #bdbdbd;
+  font-size: 56px;
+  width: 56px;
+  height: 56px;
+}
+
+.pdf-no-file span {
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .pdf-viewer-container {
-  position: relative !important;
-  width: 100%;
-  max-width: 600px;
-  min-width: 280px; /* Ancho mínimo para evitar que se oculte en pantallas pequeñas */
-  height: 80vh;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  overflow: hidden; /* sin scroll aquí; lo maneja #viewerContainer */
-  transition: all 0.3s ease;
-  margin: 0 auto;
-  display: flex !important; /* Forzar display */
-  flex-direction: column;
-  visibility: visible !important; /* Forzar visibilidad */
+  position: relative;
+  width: 700px !important;
+  min-width: 700px;
+  max-width: 700px;
+  height: auto;
+  max-height: 900px;
+  margin: 20px auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: auto;
+  display: block;
+}
+
+.pdf-viewer-container ::ng-deep ngx-extended-pdf-viewer {
+  width: 100% !important;
+  height: 100%;
+  display: block;
+}
+
+.pdf-viewer-container ::ng-deep #outerContainer {
+  width: 100% !important;
+  height: 100%;
+}
+
+.pdf-viewer-container ::ng-deep #mainContainer {
+  width: 100% !important;
+  height: 100%;
+}
+
+.pdf-viewer-container ::ng-deep #viewerContainer {
+  overflow: auto !important;
+  width: 100% !important;
+  height: calc(100% - 32px);
+}
+
+/* Asegurar que todos los botones funcionen */
+.pdf-viewer-container ::ng-deep button,
+.pdf-viewer-container ::ng-deep .toolbarButton,
+.pdf-viewer-container ::ng-deep input,
+.pdf-viewer-container ::ng-deep select {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Asegurar que el scroll sea visible */
+.pdf-viewer-container ::ng-deep #viewerContainer::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.pdf-viewer-container ::ng-deep #viewerContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.pdf-viewer-container ::ng-deep #viewerContainer::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+.pdf-viewer-container ::ng-deep #viewerContainer::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Ocultar botones de edición (dibujar, texto, imagen, etc.) */
+.pdf-viewer-container ::ng-deep #editorModeButtons,
+.pdf-viewer-container ::ng-deep #editorHighlight,
+.pdf-viewer-container ::ng-deep #editorFreeText,
+.pdf-viewer-container ::ng-deep #editorInk,
+.pdf-viewer-container ::ng-deep #editorStamp,
+.pdf-viewer-container ::ng-deep .editorParamsToolbarContainer,
+.pdf-viewer-container ::ng-deep #openFile,
+.pdf-viewer-container ::ng-deep button[title*="Abrir"],
+.pdf-viewer-container ::ng-deep button[title*="Open"] {
+  display: none !important;
 }
 
 /* Modo edición: 40% más alto */
 .operation-form-container.edit-mode .pdf-viewer-container {
-  height: 112vh; /* 80vh + 40% = 80vh * 1.4 = 112vh */
+  height: 112vh;
 }
 
 .pdf-controls {
@@ -459,6 +725,7 @@
   padding: 20px 0;
   border-top: 1px solid #e0e0e0;
   margin-top: 20px;
+  margin-right: 20px;
   position: relative;
   z-index: 10;
 }
@@ -630,26 +897,9 @@ mat-dialog-actions button {
     max-width: 98vw;
     min-width: 280px; /* Ancho mínimo garantizado para que el PDF y selector sean visibles */
     width: 100%;
-    height: 65vh;
-    display: block !important; /* Asegurar que siempre sea visible */
-    visibility: visible !important;
   }
   .operation-form-container.edit-mode .pdf-viewer-container {
-    height: 91vh; /* 65vh + 40% = 65vh * 1.4 = 91vh */
-  }
-  
-  /* Asegurar que el PDF viewer siempre sea visible */
-  .pdf-viewer-container ngx-extended-pdf-viewer {
-    display: block !important;
-    visibility: visible !important;
-    min-width: 280px;
-  }
-  
-  /* Asegurar que el canvas overlay siempre sea visible */
-  .signature-canvas-overlay {
-    display: block !important;
-    visibility: visible !important;
-    min-width: 280px;
+    min-height: 91vh;
   }
 } 
 
@@ -994,8 +1244,8 @@ pdf-viewer {
   width: 100%;
   height: 100%;
   min-width: 280px; /* Ancho mínimo para evitar que se oculte */
-  pointer-events: auto;
-  z-index: 1000;
+  pointer-events: none;
+  z-index: 5;
   background: transparent;
   box-sizing: border-box;
   transform: translateZ(0);
@@ -1053,52 +1303,7 @@ pdf-viewer {
   }
 }
 
-/* Ocultar la barra de herramientas del PDF viewer */
-::ng-deep .pdf-viewer .toolbar {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer .toolbarViewer {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer .toolbarViewerLeft {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer .toolbarViewerRight {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer .toolbarViewerMiddle {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer .secondaryToolbar {
-  display: none !important;
-}
-
-/* Hacer el PDF viewer más grande */
-::ng-deep .pdf-viewer {
-  height: 100% !important;
-  width: 100% !important;
-}
-
-::ng-deep .pdf-viewer #viewerContainer {
-  height: 100% !important;
-  width: 100% !important;
-}
-
-::ng-deep .pdf-viewer #viewerContainer .page {
-  margin: 0 auto !important;
-  max-width: 100% !important;
-}
-
-/* Asegurar que el contenido del PDF ocupe todo el ancho */
-::ng-deep .pdf-viewer #viewerContainer .page canvas {
-  max-width: 100% !important;
-  height: auto !important;
-}
+/* Estilos mínimos para PDF viewer sin interferencias */
 
 /* Hacer que las secciones del formulario ocupen más espacio */
 .form-section {
@@ -1148,107 +1353,12 @@ mat-form-field, .full-width mat-form-field {
   flex: 1;
 }
 
-/* Mostrar páginas con scroll natural del visor */
-::ng-deep .pdf-viewer #viewerContainer {
-  height: 100% !important;
-  overflow: auto !important; /* único scroll visible */
+/* Estilos mínimos para PDF viewer - dejamos que funcione normalmente */
+.pdf-viewer-container {
+  width: 100%;
+  margin-top: 20px;
 }
 
-::ng-deep .pdf-viewer #viewerContainer .page {
-  display: block !important;
-  margin: 10px auto !important;
-  max-width: 100% !important;
-}
-
-/* Ocultar sidebar del visor de PDF */
-::ng-deep .pdf-viewer #sidebarContainer {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer #sidebarContainer * {
-  display: none !important;
-}
-
-::ng-deep .pdf-viewer #viewerContainer {
-  margin-left: 0 !important;
-  left: 0 !important;
-}
-
-::ng-deep .pdf-viewer #outerContainer {
-  margin-left: 0 !important;
-}
-
-::ng-deep .pdf-viewer #mainContainer {
-  margin-left: 0 !important;
-}
-
-::ng-deep .pdf-viewer #sidebarContainer,
-::ng-deep .pdf-viewer #sidebarContainer *,
-::ng-deep .pdf-viewer #outlineView,
-::ng-deep .pdf-viewer #attachmentsView,
-::ng-deep .pdf-viewer #layersView,
-::ng-deep .pdf-viewer #thumbnailsView {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Asegurar que el contenedor principal ocupe todo el espacio */
-::ng-deep .pdf-viewer #viewerContainer {
-  width: 100% !important;
-  margin-left: 0 !important;
-}
-
-::ng-deep .pdf-viewer #mainContainer {
-  width: 100% !important;
-  margin-left: 0 !important;
-}
-
-/* Ocultar botones relacionados con el sidebar */
-::ng-deep .pdf-viewer .toolbarViewerLeft button[data-l10n-id="sidebarToggle"],
-::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="sidebar"],
-::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="outline"],
-::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="thumbnails"],
-::ng-deep .pdf-viewer .toolbarViewerLeft button[title*="attachments"] {
-  display: none !important;
-}
-
-
-
-/* Ajustar el contenedor del PDF viewer para evitar overflow */
-::ng-deep .pdf-viewer {
-  width: 100% !important;
-  overflow: hidden !important;
-  box-sizing: border-box !important;
-}
-
-/* Asegurar que el scroll del PDF viewer sea siempre visible */
-::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar {
-  width: 16px;
-}
-
-::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 8px;
-}
-
-::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 8px;
-}
-
-::ng-deep .pdf-viewer #viewerContainer::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Asegurar que el scroll tenga espacio suficiente */
-::ng-deep .pdf-viewer #viewerContainer {
-  scrollbar-width: 16px;
-  scrollbar-color: #c1c1c1 #f1f1f1;
-}
-
-/* Ajustar el contenedor del PDF para evitar que el scroll se oculte */
 .pdf-section {
   margin-bottom: 20px;
 }

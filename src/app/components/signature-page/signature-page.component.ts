@@ -79,6 +79,8 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
   isLoadingPdf = false;
   currentPage = 1;
   totalPages = 1;
+  lastVisitedPage = 1;
+  pdfproportions = 1.414; // Proporción A4 (alto/ancho)
   
   // Variables para el área de firma actual
   currentSignatureArea: SignatureArea | null = null;
@@ -100,12 +102,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
   pdfScrollTop = 0;
   pdfScrollLeft = 0;
 
-  // Variables para el canvas de firma (mantener compatibilidad)
-  private ctx: CanvasRenderingContext2D | null = null;
-  isDrawing = false;
-  lastX = 0;
-  lastY = 0;
-
   // Variables para el canvas overlay
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private canvasStartX = 0;
@@ -122,15 +118,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
   
   // Variable para el partyId pendiente de activación
   private pendingPartyId: number | null = null;
-  
-  // Variable para controlar navegación manual
-  private isManualNavigation = false;
 
-  // Variable para rastrear si el canvas ya ha sido posicionado inicialmente
-  private canvasInitialized = false;
-  
-  // Variables para trackear la página en la que se está definiendo un área
-  private currentDefiningPageNumber: number = 1;
   private currentDefiningPageRect: DOMRect | null = null;
   
   // Variable para prevenir múltiples renders simultáneos
@@ -168,14 +156,13 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   ngAfterViewInit(): void {
-    this.setupSignatureCanvas();
     this.setupCanvasOverlay();
-    
-    // Agregar listener para el scroll del viewerContainer
+
+   // Agregar listener para el scroll del viewerContainer
     setTimeout(() => {
       this.setupViewerContainerScrollListener();
     }, 1000);
-    
+
     // Siempre habilitar eventos del canvas ya que siempre estamos en modo definición
     setTimeout(() => {
       if (this.signatureCanvasRef) {
@@ -183,12 +170,12 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
         console.log('🔍 Canvas pointer events enabled (always on)');
       }
     }, 1500);
-    
+
     // Renderizar el canvas después de la inicialización
     setTimeout(() => {
       this.renderCanvas();
     }, 2000);
-    
+
     // Deshabilitar navegación automática
     setTimeout(() => {
       this.disableAutomaticNavigation();
@@ -382,32 +369,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  private setupSignatureCanvas(): void {
-    if (!this.signatureCanvasRef) return;
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    this.ctx = canvas.getContext('2d');
-    
-    if (!this.ctx) return;
-    
-    // Configurar el canvas
-    canvas.width = 300;
-    canvas.height = 150;
-    
-    this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 2;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
-
-
-    
-    // Limpiar canvas
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-   
-  }
-
   // Clave para localStorage para guardar coords originales (PDF) por operación/party/página
   private getOriginalAreaStorageKey(partyId: number, page: number): string {
     return `sig_coords_op_${this.operationId}_party_${partyId}_page_${page}`;
@@ -595,331 +556,47 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     console.log('Page change event received (ignored):', event);
   }
 
-  startSigning(area: SignatureArea): void {
-    if (area.isSigned) {
-      this.snackBar.open('Esta área ya está firmada', 'Cerrar', { duration: 3000 });
-      return;
+  onPdfPageChange(event: any): void {
+    console.log('PDF pageChange event:', event);
+    let newPage: number | null = null;
+
+    if (event && typeof event === 'number') {
+      newPage = event;
+    } else if (event && event.pageNumber) {
+      newPage = event.pageNumber;
     }
 
-    this.currentSignatureArea = area;
-    this.isSigningMode = true;
-    
-    // Limpiar canvas de firma
-    if (this.ctx) {
-      this.ctx.fillStyle = '#fff';
-      this.ctx.fillRect(0, 0, this.signatureCanvasRef.nativeElement.width, this.signatureCanvasRef.nativeElement.height);
-    }
-  }
-
-  startDirectSigning(area: SignatureArea): void {
-    if (area.isSigned) {
-      this.snackBar.open('Esta área ya está firmada', 'Cerrar', { duration: 3000 });
-      return;
-    }
-
-    this.currentSignatureArea = area;
-    this.isSigningMode = true;
-    
-    // Configurar el canvas de firma directa
-    setTimeout(() => {
-      this.setupDirectSignatureCanvas(area);
-    }, 100);
-  }
-
-  private setupDirectSignatureCanvas(area: SignatureArea): void {
-    const canvas = document.querySelector('.direct-signature-canvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Configurar el canvas con las dimensiones del área
-    canvas.width = area.width;
-    canvas.height = area.height;
-    
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    // Limpiar canvas
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  onDirectSignatureMouseDown(event: MouseEvent, area: SignatureArea): void {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const canvas = event.target as HTMLCanvasElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    this.isDrawing = true;
-    const rect = canvas.getBoundingClientRect();
-    this.lastX = event.clientX - rect.left;
-    this.lastY = event.clientY - rect.top;
-  }
-
-  onDirectSignatureMouseMove(event: MouseEvent, area: SignatureArea): void {
-    if (!this.isDrawing) return;
-    
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const canvas = event.target as HTMLCanvasElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const currentX = event.clientX - rect.left;
-    const currentY = event.clientY - rect.top;
-    
-    ctx.beginPath();
-    ctx.moveTo(this.lastX, this.lastY);
-    ctx.lineTo(currentX, currentY);
-    ctx.stroke();
-    
-    this.lastX = currentX;
-    this.lastY = currentY;
-  }
-
-  onDirectSignatureMouseUp(): void {
-    this.isDrawing = false;
-  }
-
-  onDirectSignatureTouchStart(event: TouchEvent, area: SignatureArea): void {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const canvas = event.target as HTMLCanvasElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    this.isDrawing = true;
-    const rect = canvas.getBoundingClientRect();
-    const touch = event.touches[0];
-    this.lastX = touch.clientX - rect.left;
-    this.lastY = touch.clientY - rect.top;
-  }
-
-  onDirectSignatureTouchMove(event: TouchEvent, area: SignatureArea): void {
-    if (!this.isDrawing) return;
-    
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const canvas = event.target as HTMLCanvasElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const touch = event.touches[0];
-    const currentX = touch.clientX - rect.left;
-    const currentY = touch.clientY - rect.top;
-    
-    ctx.beginPath();
-    ctx.moveTo(this.lastX, this.lastY);
-    ctx.lineTo(currentX, currentY);
-    ctx.stroke();
-    
-    this.lastX = currentX;
-    this.lastY = currentY;
-  }
-
-  onDirectSignatureTouchEnd(): void {
-    this.isDrawing = false;
-  }
-
-  // Métodos para el canvas de firma original (panel lateral)
-  onSignatureMouseDown(event: MouseEvent): void {
-    if (!this.isSigningMode || !this.ctx) return;
-    
-    this.isDrawing = true;
-    const rect = this.signatureCanvasRef.nativeElement.getBoundingClientRect();
-    this.lastX = event.clientX - rect.left;
-    this.lastY = event.clientY - rect.top;
-  }
-
-  onSignatureMouseMove(event: MouseEvent): void {
-    if (!this.isDrawing || !this.ctx) return;
-    
-    const rect = this.signatureCanvasRef.nativeElement.getBoundingClientRect();
-    const currentX = event.clientX - rect.left;
-    const currentY = event.clientY - rect.top;
-    
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.lastX, this.lastY);
-    this.ctx.lineTo(currentX, currentY);
-    this.ctx.stroke();
-    
-    this.lastX = currentX;
-    this.lastY = currentY;
-  }
-
-  onSignatureMouseUp(): void {
-    this.isDrawing = false;
-  }
-
-  onSignatureTouchStart(event: TouchEvent): void {
-    if (!this.isSigningMode || !this.ctx) return;
-    
-    event.preventDefault();
-    this.isDrawing = true;
-    const rect = this.signatureCanvasRef.nativeElement.getBoundingClientRect();
-    const touch = event.touches[0];
-    this.lastX = touch.clientX - rect.left;
-    this.lastY = touch.clientY - rect.top;
-  }
-
-  onSignatureTouchMove(event: TouchEvent): void {
-    if (!this.isDrawing || !this.ctx) return;
-    
-    event.preventDefault();
-    const rect = this.signatureCanvasRef.nativeElement.getBoundingClientRect();
-    const touch = event.touches[0];
-    const currentX = touch.clientX - rect.left;
-    const currentY = touch.clientY - rect.top;
-    
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.lastX, this.lastY);
-    this.ctx.lineTo(currentX, currentY);
-    this.ctx.stroke();
-    
-    this.lastX = currentX;
-    this.lastY = currentY;
-  }
-
-  onSignatureTouchEnd(): void {
-    this.isDrawing = false;
-  }
-
-  clearSignature(): void {
-    if (!this.ctx) return;
-    
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillRect(0, 0, this.signatureCanvasRef.nativeElement.width, this.signatureCanvasRef.nativeElement.height);
-  }
-
-  // Método mejorado para guardar firma directa
-  saveDirectSignature(area: SignatureArea): void {
-    const canvas = document.querySelector('.direct-signature-canvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    // Convertir canvas a base64
-    const signatureData = canvas.toDataURL('image/png');
-    
-    // Actualizar el área de firma
-    area.isSigned = true;
-    area.signatureData = signatureData;
-    
-    // Guardar la firma en el backend
-    this.saveSignatureToBackend(area);
-    
-    this.snackBar.open('Firma guardada exitosamente', 'OK', { duration: 2000 });
-    
-    // Salir del modo de firma
-    this.isSigningMode = false;
-    this.currentSignatureArea = null;
-  }
-
-  clearDirectSignature(area: SignatureArea): void {
-    const canvas = document.querySelector('.direct-signature-canvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  cancelDirectSignature(): void {
-    this.isSigningMode = false;
-    this.currentSignatureArea = null;
-  }
-
-  saveSignature(): void {
-    if (!this.currentSignatureArea || !this.ctx) return;
-    
-    // Convertir canvas a base64
-    const signatureData = this.signatureCanvasRef.nativeElement.toDataURL('image/png');
-    
-    // Actualizar el área de firma
-    this.currentSignatureArea.isSigned = true;
-    this.currentSignatureArea.signatureData = signatureData;
-    
-    // Aplicar la firma al área del PDF
-    this.applySignatureToPdfArea(this.currentSignatureArea, signatureData);
-    
-    // Guardar la firma en el backend
-    this.saveSignatureToBackend(this.currentSignatureArea);
-    
-    this.snackBar.open('Firma guardada exitosamente', 'OK', { duration: 2000 });
-    
-    // Salir del modo de firma
-    this.isSigningMode = false;
-    this.currentSignatureArea = null;
-  }
-
-  private applySignatureToPdfArea(area: SignatureArea, signatureData: string): void {
-    // Crear una imagen con la firma
-    const img = new Image();
-    img.onload = () => {
-      // Aquí podrías aplicar la imagen al PDF usando el visor
-      console.log('Signature image loaded, applying to area:', area);
-      
-      // Por ahora, solo marcamos el área como firmada visualmente
-      // En una implementación completa, aquí aplicarías la imagen al PDF
-    };
-    img.src = signatureData;
-  }
-
-  private saveSignatureToBackend(area: SignatureArea): void {
-    if (!area.partyId) return;
-    
-    // Buscar el party actual para obtener todos sus datos
-    const currentParty = this.parties.find(p => p.id === area.partyId);
-    if (!currentParty) return;
-    
-    console.log('Saving area to backend - Original coordinates:', { x: area.x, y: area.y, width: area.width, height: area.height });
-    
-    // Crear el objeto en el formato que espera el backend
-    // Usar las coordenadas originales del área que ya están en formato PDF
-    const partyData = {
-      firstName: currentParty.firstName,
-      lastName: currentParty.lastName,
-      email: currentParty.email,
-      phoneNumber: currentParty.phoneNumber,
-      prefix: currentParty.prefix,
-      required: currentParty.required,
-      voice: currentParty.voice,
-      photo: currentParty.photo,
-      partyTexts: currentParty.partyTexts.map(pt => ({ text: pt.text })),
-      x: area.x, // Coordenadas ya están en formato PDF
-      y: area.y, // Coordenadas ya están en formato PDF
-      width: area.width, // Coordenadas ya están en formato PDF
-      height: area.height, // Coordenadas ya están en formato PDF
-      page: area.page,
-      fingerPrint: currentParty.fingerPrint,
-    };
-    
-    console.log('Saving party data to backend:', partyData);
-    
-    this.partyService.updateParty(area.partyId, partyData).subscribe({
-      next: () => {
-        console.log('Área de firma guardada en el backend');
-      },
-      error: (err) => {
-        console.error('Error al guardar área de firma:', err);
-        this.snackBar.open('Error al guardar el área de firma', 'Cerrar', { duration: 3000 });
+    // Detectar si se navega a la primera o última página
+    if (newPage !== null) {
+      if (newPage === 1) {
+        // Evento o lógica para la primera página
+        console.log('🚩 Se ha navegado a la PRIMERA página');
+        // Aquí puedes emitir un evento, llamar a un callback, etc.
+        // Ejemplo: this.onFirstPageReached.emit();
+      } else if (this.totalPages && newPage === this.totalPages) {
+        // Evento o lógica para la última página
+        console.log('🏁 Se ha navegado a la ÚLTIMA página');
+        // Aquí puedes emitir un evento, llamar a un callback, etc.
+        // Ejemplo: this.onLastPageReached.emit();
       }
-    });
+    }
+
+    // Solo actualizar si la página realmente cambió
+    if (newPage !== null && newPage !== this.currentPage) {
+      this.lastVisitedPage = newPage;
+      this.currentPage = newPage;
+      this.renderCanvas();
+      console.log('✅ Last visited page updated to:', this.lastVisitedPage);
+    }
   }
 
-  cancelSigning(): void {
-    this.isSigningMode = false;
-    this.currentSignatureArea = null;
+  onPdfPageRendered(event: any): void {
+    console.log('PDF pageRendered event:', event);
+    const viewport = event.source.viewport;
+    const width = viewport.width;
+    const height = viewport.height;
+    this.pdfproportions = height / width;
+    console.log('Dimensiones de la página PDF:', width, height);
   }
 
   getAreasForCurrentPage(): SignatureArea[] {
@@ -937,72 +614,59 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     return party ? `${party.firstName} ${party.lastName}` : 'Firmante desconocido';
   }
 
-  isPartySigned(partyId: number): boolean {
-    const area = this.signatureAreas.find(a => a.partyId === partyId);
-    return area ? area.isSigned || false : false;
-  }
-
-  startSigningForParty(partyId: number): void {
-    const area = this.signatureAreas.find(a => a.partyId === partyId);
-    if (area) {
-      this.startSigning(area);
-    }
-  }
-
   goBack(): void {
     console.log('🔍 goBack called');
     
+    // Usar la misma lógica que goBack() para manejar la navegación y apertura del modal
+    console.log('🔍 acceptSignatureAreas - checking for modal data');
+    
     const returnToModal = sessionStorage.getItem('returnToModal');
     const modalData = sessionStorage.getItem('modalData');
-    const origin = sessionStorage.getItem('signatureOrigin');
     
     console.log('🔍 returnToModal:', returnToModal);
     console.log('🔍 modalData exists:', !!modalData);
-    console.log('🔍 origin:', origin);
-
-    // Si hay un origen específico, navegar a ese origen
-    if (origin) {
-      console.log('🔍 Navigating to origin:', origin);
-      sessionStorage.removeItem('signatureOrigin');
-      
-      if (origin === 'user-list') {
-        this.router.navigate(['/user-list']).then(() => {
-          console.log('🔍 Successfully navigated to user-list');
-        }).catch((error) => {
-          console.error('🔍 Navigation error to user-list:', error);
-          this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
-        });
-        return;
-      } else if (origin === 'operation-list') {
-        this.router.navigate(['/operation-list']).then(() => {
-          console.log('🔍 Successfully navigated to operation-list');
-        }).catch((error) => {
-          console.error('🔍 Navigation error to operation-list:', error);
-          this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
-        });
-        return;
-      }
-    }
 
     if (returnToModal === 'true' && modalData) {
       try {
+        console.log('🔍 === RECOVERING MODAL DATA ===');
+        console.log('🔍 Raw modal data from sessionStorage:', modalData);
         console.log('🔍 Parsing modal data...');
         const modalInfo = JSON.parse(modalData);
         console.log('🔍 Modal info parsed:', modalInfo);
+        console.log('🔍 Modal info type:', typeof modalInfo);
+        console.log('🔍 Modal info.config:', modalInfo.config);
+        console.log('🔍 Modal info.config.data:', modalInfo.config?.data);
+        console.log('🔍 isEdit value recovered:', modalInfo.config?.data?.isEdit);
+        console.log('🔍 isEdit type recovered:', typeof modalInfo.config?.data?.isEdit);
         
         sessionStorage.removeItem('returnToModal');
         sessionStorage.removeItem('modalData');
 
         console.log('🔍 Navigating to operation-list...');
-        this.router.navigate(['/operation-list']).then(() => {
+
+        let origin = sessionStorage.getItem('signatureOrigin');
+
+        if (origin === 'user-list' || origin === 'operation-list') {
+          this.router.navigate([origin]).then(() => {
           console.log('🔍 Navigation successful, opening modal in 500ms...');
           setTimeout(() => {
             this.openPreviousModal(modalInfo);
           }, 500); // Aumentar el delay para asegurar que la navegación esté completa
         }).catch((error) => {
-          console.error('🔍 Navigation error:', error);
-          this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
-        });
+            console.error('🔍 Navigation error:', error);
+            this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
+          });
+        } else {
+          this.router.navigate(['/operation-list']).then(() => {
+            console.log('🔍 Navigation successful, opening modal in 500ms...');
+            setTimeout(() => {
+              this.openPreviousModal(modalInfo);
+            }, 500); // Aumentar el delay para asegurar que la navegación esté completa
+          }).catch((error) => {
+            console.error('🔍 Navigation error:', error);
+            this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
+          });
+        }
 
       } catch (error) {
         console.error('🔍 Error parsing modal data:', error);
@@ -1067,84 +731,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     } else {
       console.error('🔍 Unknown modal type:', modalInfo.type);
       this.snackBar.open('Tipo de modal desconocido', 'Cerrar', { duration: 3000 });
-    }
-  }
-
-  // Método para aceptar las áreas de firma definidas
-  acceptSignatureAreas(): void {
-    const definedAreas = this.signatureAreas.filter(area => area.isDefined);
-    
-    if (definedAreas.length === 0) {
-      this.snackBar.open('No hay áreas de firma definidas para aceptar', 'OK', { duration: 3000 });
-      return;
-    }
-    
-    console.log('Aceptando áreas de firma definidas:', definedAreas);
-    
-    // Aquí puedes agregar la lógica para guardar o procesar las áreas aceptadas
-    this.snackBar.open(`${definedAreas.length} área(s) de firma aceptada(s)`, 'OK', { duration: 2000 });
-    
-    // Usar la misma lógica que goBack() para manejar la navegación y apertura del modal
-    console.log('🔍 acceptSignatureAreas - checking for modal data');
-    
-    const returnToModal = sessionStorage.getItem('returnToModal');
-    const modalData = sessionStorage.getItem('modalData');
-    
-    console.log('🔍 returnToModal:', returnToModal);
-    console.log('🔍 modalData exists:', !!modalData);
-
-    if (returnToModal === 'true' && modalData) {
-      try {
-        console.log('🔍 === RECOVERING MODAL DATA ===');
-        console.log('🔍 Raw modal data from sessionStorage:', modalData);
-        console.log('🔍 Parsing modal data...');
-        const modalInfo = JSON.parse(modalData);
-        console.log('🔍 Modal info parsed:', modalInfo);
-        console.log('🔍 Modal info type:', typeof modalInfo);
-        console.log('🔍 Modal info.config:', modalInfo.config);
-        console.log('🔍 Modal info.config.data:', modalInfo.config?.data);
-        console.log('🔍 isEdit value recovered:', modalInfo.config?.data?.isEdit);
-        console.log('🔍 isEdit type recovered:', typeof modalInfo.config?.data?.isEdit);
-        
-        sessionStorage.removeItem('returnToModal');
-        sessionStorage.removeItem('modalData');
-
-        console.log('🔍 Navigating to operation-list...');
-
-        let origin = sessionStorage.getItem('signatureOrigin');
-
-        if (origin === 'user-list' || origin === 'operation-list') {
-          this.router.navigate([origin]).then(() => {
-          console.log('🔍 Navigation successful, opening modal in 500ms...');
-          setTimeout(() => {
-            this.openPreviousModal(modalInfo);
-          }, 500); // Aumentar el delay para asegurar que la navegación esté completa
-        }).catch((error) => {
-            console.error('🔍 Navigation error:', error);
-            this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
-          });
-        } else {
-          this.router.navigate(['/operation-list']).then(() => {
-            console.log('🔍 Navigation successful, opening modal in 500ms...');
-            setTimeout(() => {
-              this.openPreviousModal(modalInfo);
-            }, 500); // Aumentar el delay para asegurar que la navegación esté completa
-          }).catch((error) => {
-            console.error('🔍 Navigation error:', error);
-            this.snackBar.open('Error al navegar de vuelta', 'Cerrar', { duration: 3000 });
-          });
-        }
-
-      } catch (error) {
-        console.error('🔍 Error parsing modal data:', error);
-        console.error('🔍 Modal data was:', modalData);
-        this.snackBar.open('Error al procesar datos del modal', 'Cerrar', { duration: 3000 });
-        // Navegar de vuelta sin abrir modal
-        this.router.navigate(['/operation-list']);
-      }
-    } else {
-      console.log('🔍 No modal data found, navigating directly to operation-list');
-      this.router.navigate(['/operation-list']);
     }
   }
 
@@ -1321,7 +907,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private onMouseUp(): void {
     if (this.isDragging) {
-      this.finishDefiningArea();
+      this.finishDefiningArea(this.lastVisitedPage, this.signatureAreas);
     }
     this.isDragging = false;
     document.removeEventListener('mousemove', this.onMouseMove.bind(this));
@@ -1347,19 +933,19 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private onTouchEnd(): void {
     if (this.isDragging) {
-      this.finishDefiningArea();
+      this.finishDefiningArea(this.lastVisitedPage, this.signatureAreas);
     }
     this.isDragging = false;
     document.removeEventListener('touchmove', this.onTouchMove.bind(this));
     document.removeEventListener('touchend', this.onTouchEnd.bind(this));
   }
 
-  private async finishDefiningArea(): Promise<void> {
+  private async finishDefiningArea(drawingPage: number, signatureAreas: SignatureArea[]): Promise<void> {
     // Snapshot to avoid race conditions with mouseup clearing state
     const definingPartyId = this.currentDefiningPartyId;
     const rectSnapshot = this.currentRect ? { ...this.currentRect } : null;
     // Usar el número de página donde se hizo clic, no la página actual visible
-    const selectedPageNumber = rectSnapshot?.pageNumber || this.currentDefiningPageNumber || this.currentPage;
+    const selectedPageNumber = drawingPage;// rectSnapshot?.pageNumber || this.currentDefiningPageNumber || this.currentPage;
 
     if (!definingPartyId || !rectSnapshot) {
       if (!this.currentDefiningPartyId) {
@@ -1436,8 +1022,9 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     console.log('PDF real dimensions (points):', realPdfWidth, 'x', realPdfHeight);
     
     // Calcular las escalas de conversión usando las dimensiones reales del PDF
-    const scaleX = realPdfWidth / pageRect.width;
-    const scaleY = realPdfHeight / pageRect.height;
+    const canvas = this.signatureCanvasRef.nativeElement;
+    const scaleX = realPdfWidth / canvas.width;
+    const scaleY = realPdfHeight / canvas.height;
     
     console.log('Scale factors:', scaleX, 'x', scaleY);
     console.log('Page-relative coordinates (pixels):', { x: pageX, y: pageY, width: pageWidth, height: pageHeight });
@@ -1451,8 +1038,8 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const adjustedY = pageY + canvasTopCropPx;
     
     // Convertir coordenadas SIN Math.round para mayor precisión
-    let pdfX = adjustedX * scaleX;
-    let pdfY = adjustedY * scaleY;
+    let pdfX = this.currentRect.pageX * scaleX;
+    let pdfY = this.currentRect.pageY * scaleY;
     let areaWidth = Math.abs(pageWidth) * scaleX;
     let areaHeight = Math.abs(pageHeight) * scaleY;
     
@@ -1489,12 +1076,10 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     console.log('=== END FINISH DEFINING AREA ===');
     
     // Crear o actualizar el área de firma
-    const existingAreaIndex = this.signatureAreas.findIndex(area => 
-      area.partyId === definingPartyId && area.page === selectedPageNumber
-    );
+    const existingAreaIndex = signatureAreas.findIndex(area => area.partyId === definingPartyId);
     
     const newArea: SignatureArea = {
-      id: `area_${definingPartyId}_page_${selectedPageNumber}`,
+      id: `area_${definingPartyId}`,//_page_${selectedPageNumber}`,
       x: finalPdfX,
       y: finalPdfY,
       width: finalAreaWidth,
@@ -1508,10 +1093,10 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     };
     
     if (existingAreaIndex >= 0) {
-      this.signatureAreas[existingAreaIndex] = newArea;
+      signatureAreas[existingAreaIndex] = newArea;
       this.snackBar.open('Área de firma actualizada correctamente', 'OK', { duration: 2000 });
     } else {
-      this.signatureAreas.push(newArea);
+      signatureAreas.push(newArea);
       this.snackBar.open('Área de firma definida correctamente', 'OK', { duration: 2000 });
     }
     // Persistir coordenadas originales para que la UI siempre muestre lo que dibujó el usuario
@@ -1587,6 +1172,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       height: area.height, // Coordenadas ya están en formato PDF
       page: area.page,
       fingerPrint: currentParty.fingerPrint,
+      lastVisitedPage: this.lastVisitedPage
     };
     
     console.log('Saving party data to backend:', partyData);
@@ -1601,120 +1187,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       }
     });
   }
-
-  // Métodos de navegación
-  prevPage(): void {
-    console.log('🔍 prevPage called - currentPage:', this.currentPage, 'totalPages:', this.totalPages);
-    if (this.currentPage > 1) {
-      this.isManualNavigation = true; // Marcar como navegación manual
-      this.currentPage--;
-      console.log('🔍 Navegando a página anterior:', this.currentPage);
-      
-      // Usar el PDF viewer para navegar a la página
-      this.navigateToPage(this.currentPage);
-      
-      // Actualizar el canvas para que coincida con la nueva página
-      setTimeout(() => {
-        this.updatePagePositions();
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 100);
-      
-      // También actualizar después de un tiempo adicional para asegurar que el PDF se haya renderizado completamente
-      setTimeout(() => {
-        this.updatePagePositions();
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 500);
-    } else {
-      console.log('🔍 No se puede navegar a página anterior - currentPage <= 1');
-    }
-  }
-
-  nextPage(): void {
-    console.log('🔍 nextPage called - currentPage:', this.currentPage, 'totalPages:', this.totalPages);
-    if (this.currentPage < this.totalPages) {
-      this.isManualNavigation = true; // Marcar como navegación manual
-      this.currentPage++;
-      console.log('🔍 Navegando a página siguiente:', this.currentPage);
-      
-      // Usar el PDF viewer para navegar a la página
-      this.navigateToPage(this.currentPage);
-      
-      // Actualizar el canvas para que coincida con la nueva página
-      setTimeout(() => {
-        this.updatePagePositions();
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 100);
-      
-      // También actualizar después de un tiempo adicional para asegurar que el PDF se haya renderizado completamente
-      setTimeout(() => {
-        this.updatePagePositions();
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 500);
-    } else {
-      console.log('🔍 No se puede navegar a página siguiente - currentPage >= totalPages');
-    }
-  }
-
-  // Método para navegar a una página específica usando el PDF viewer
-  private navigateToPage(pageNumber: number): void {
-    console.log('🔍 Navigating to page:', pageNumber);
-    
-    try {
-      // Intentar usar el PDF viewer para navegar
-      const pdfViewerElement = document.querySelector('ngx-extended-pdf-viewer') as any;
-      if (pdfViewerElement && pdfViewerElement._pdfViewer) {
-        const pdfViewer = pdfViewerElement._pdfViewer;
-        if (pdfViewer.currentPageNumber !== undefined) {
-          pdfViewer.currentPageNumber = pageNumber;
-          console.log('🔍 Used PDF viewer navigation to page:', pageNumber);
-          return;
-        }
-      }
-      
-      // Intentar usar el viewerContainer
-      const viewerContainer = document.querySelector('#viewerContainer') as any;
-      if (viewerContainer && viewerContainer._pdfViewer) {
-        const pdfViewer = viewerContainer._pdfViewer;
-        if (pdfViewer.currentPageNumber !== undefined) {
-          pdfViewer.currentPageNumber = pageNumber;
-          console.log('🔍 Used viewerContainer navigation to page:', pageNumber);
-          return;
-        }
-      }
-      
-      // Si no se puede usar la navegación interna, intentar scroll manual
-      this.scrollToPage(pageNumber);
-      
-    } catch (error) {
-      console.log('🔍 Error navigating to page:', error);
-      // Fallback: scroll manual
-      this.scrollToPage(pageNumber);
-    }
-  }
-
-  // Método para hacer scroll a una página específica
-  private scrollToPage(pageNumber: number): void {
-    console.log('🔍 Scrolling to page:', pageNumber);
-    
-    try {
-      // Buscar la página en el DOM
-      const pages = document.querySelectorAll('.page');
-      if (pages.length >= pageNumber) {
-        const targetPage = pages[pageNumber - 1] as HTMLElement;
-        if (targetPage) {
-          targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          console.log('🔍 Scrolled to page:', pageNumber);
-        }
-      }
-    } catch (error) {
-      console.log('🔍 Error scrolling to page:', error);
-    }
-  }
-
   // Métodos para selección de áreas
   selectArea(area: SignatureArea): void {
     this.selectedArea = area;
@@ -1768,13 +1240,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const canvas = this.signatureCanvasRef.nativeElement;
     const container = this.pdfContainerRef.nativeElement;
     
-    // Asegurar que el contenedor esté visible ANTES de obtener dimensiones
-    container.style.setProperty('display', 'block', 'important');
-    container.style.setProperty('visibility', 'visible', 'important');
-    container.style.setProperty('width', '100%', 'important');
-    container.style.setProperty('min-width', '280px', 'important');
-    container.style.setProperty('min-height', '200px', 'important');
-    
     // Esperar al siguiente frame para que el DOM se actualice
     requestAnimationFrame(() => {
       // Obtener las dimensiones del contenedor del PDF después de asegurar visibilidad
@@ -1811,56 +1276,26 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
         return;
       }
       
-      // Determinar todas las páginas visibles (no solo la más visible)
-      const visiblePages = Array.from(pdfPages).filter(page => {
-        const pageRect = page.getBoundingClientRect();
-        const visibleTop = Math.max(pageRect.top, containerRect.top);
-        const visibleBottom = Math.min(pageRect.bottom, containerRect.bottom);
-        return visibleBottom > visibleTop; // La página tiene alguna parte visible
-      });
-      
-      if (visiblePages.length === 0) {
-        console.log('🔍 No visible pages found');
-        // Reintentar si no hay páginas visibles
-        setTimeout(() => {
-          this.resizeCanvasToPdfPage();
-        }, 200);
-        return;
-      }
-      
       // Calcular el área total que cubren todas las páginas visibles
       let minTop = Infinity;
       let maxBottom = -Infinity;
       let maxWidth = 0;
       
-      visiblePages.forEach(page => {
-        const pageRect = page.getBoundingClientRect();
-        minTop = Math.min(minTop, pageRect.top);
-        maxBottom = Math.max(maxBottom, pageRect.bottom);
-        maxWidth = Math.max(maxWidth, pageRect.width);
-      });
+      const pageRect = pdfPages[0].getBoundingClientRect();
+      minTop = Math.min(minTop, pageRect.top);
+      maxBottom = Math.max(maxBottom, pageRect.bottom);
+      maxWidth = Math.max(maxWidth, pageRect.width);
       
       // Crear un rectángulo que cubre todas las páginas visibles
       const combinedRect = {
         top: minTop,
-        left: visiblePages[0].getBoundingClientRect().left, // Usar el left de la primera página
+        left: pdfPages[0].getBoundingClientRect().left, // Usar el left de la primera página
         width: maxWidth,
         height: maxBottom - minTop
       };
       
       // Determinar la página principal para actualizar currentPage
-      const currentPageElement = this.getCurrentVisiblePage(pdfPages, container);
-      if (currentPageElement) {
-        const pagesArray = Array.from(pdfPages);
-        const visibleIndex = pagesArray.indexOf(currentPageElement);
-        if (visibleIndex >= 0) {
-          const detectedPage = visibleIndex + 1; // 1-based
-          if (this.currentPage !== detectedPage) {
-            console.log('🔍 Visible page changed -> updating currentPage:', this.currentPage, '=>', detectedPage);
-            this.currentPage = detectedPage;
-          }
-        }
-      }
+      const currentPageElement = pdfPages[0];
       
       // Verificar que el área combinada tenga dimensiones válidas
       if (combinedRect.width === 0 || combinedRect.height === 0) {
@@ -1873,13 +1308,10 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       
       // Obtener el ancho del scrollbar si existe (típicamente 15-20px)
       const viewerContainer = container.querySelector('#viewerContainer') as HTMLElement;
-      const scrollbarWidth = viewerContainer && viewerContainer.offsetWidth > viewerContainer.clientWidth 
-        ? viewerContainer.offsetWidth - viewerContainer.clientWidth 
-        : 20; // Fallback: 20px
       
       // Usar dimensiones mínimas si son muy pequeñas, dejando espacio para el scrollbar
-      const canvasWidth = Math.max(combinedRect.width - scrollbarWidth - 10, 280);
-      const canvasHeight = Math.max(combinedRect.height - 10, 200);
+      const canvasWidth = Math.max(combinedRect.width -30, 280);
+      const canvasHeight = canvasWidth * this.pdfproportions;
       
       // Configurar el canvas para cubrir TODAS las páginas visibles
       canvas.width = canvasWidth;
@@ -1914,7 +1346,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       }
       
       // Ajustar también el overlay para que coincida exactamente con el canvas (usar combinedRect)
-      this.resizeCanvasOverlay(combinedRect as DOMRect, containerRect);
+      //this.resizeCanvasOverlay(combinedRect as DOMRect, containerRect);
       
       console.log('🔍 Canvas resized for page:', this.currentPage);
       console.log('🔍 Canvas dimensions:', canvas.width, 'x', canvas.height);
@@ -1924,74 +1356,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       // Forzar redibujado del canvas
       this.forceCanvasRedraw();
     });
-  }
-
-  private getCurrentVisiblePage(pdfPages: NodeListOf<HTMLElement>, container: HTMLElement): HTMLElement | null {
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.top + containerRect.height / 2;
-    
-    let currentPage: HTMLElement | null = null;
-    let maxVisibleArea = 0;
-    
-    pdfPages.forEach((page) => {
-      const pageRect = page.getBoundingClientRect();
-      
-      // Calcular el área visible de la página
-      const visibleTop = Math.max(pageRect.top, containerRect.top);
-      const visibleBottom = Math.min(pageRect.bottom, containerRect.bottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      
-      // Si la página está visible y tiene más área visible que la anterior
-      if (visibleHeight > 0 && visibleHeight > maxVisibleArea) {
-        maxVisibleArea = visibleHeight;
-        currentPage = page;
-      }
-    });
-    
-    // Si no se encontró ninguna página visible, usar la más cercana al centro
-    if (!currentPage) {
-      let minDistance = Infinity;
-      
-      pdfPages.forEach((page) => {
-        const pageRect = page.getBoundingClientRect();
-        const pageCenter = pageRect.top + pageRect.height / 2;
-        const distance = Math.abs(pageCenter - containerCenter);
-        
-        if (distance < minDistance) {
-          minDistance = distance;
-          currentPage = page;
-        }
-      });
-    }
-    
-    return currentPage;
-  }
-
-  private resizeCanvasOverlay(pageRect: DOMRect, containerRect: DOMRect): void {
-    // Buscar el overlay del canvas (es un canvas, no un div)
-    const overlay = document.querySelector('canvas.signature-canvas-overlay') as HTMLElement;
-    if (!overlay) {
-      console.log('🔍 No canvas overlay found');
-      return;
-    }
-    
-    // Configurar el overlay para que coincida exactamente con el canvas reducido
-    overlay.style.position = 'absolute';
-    overlay.style.left = (pageRect.left - containerRect.left + 5) + 'px';
-    overlay.style.top = (pageRect.top - containerRect.top + 5) + 'px';
-    overlay.style.width = (pageRect.width - 10) + 'px';
-    overlay.style.height = (pageRect.height - 10) + 'px';
-    overlay.style.zIndex = '1000';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.zIndex = '1001';
-    overlay.style.borderRadius = '8px';
-    overlay.style.boxSizing = 'border-box';
-    
-
-    
-    console.log('🔍 Canvas overlay resized for page:', this.currentPage);
-    console.log('🔍 Overlay dimensions:', overlay.style.width, 'x', overlay.style.height);
-    console.log('🔍 Overlay position:', overlay.style.left, overlay.style.top);
   }
 
   // Intenta obtener las dimensiones reales del PDF (en puntos) de forma robusta
@@ -2075,20 +1439,17 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     
     const pagePositions: { top: number, height: number }[] = [];
     
-    pdfPages.forEach((page, index) => {
-      // Calcular la posición relativa al contenedor del PDF
-      const pageRect = page.getBoundingClientRect();
-      const pageTop = pageRect.top - containerRect.top + container.scrollTop;
-      const pageHeight = pageRect.height;
-      
-      console.log(`🔍 Page ${index + 1}:`);
-      console.log(`🔍   Page rect:`, pageRect);
-      console.log(`🔍   Calculated top: ${pageTop}, height: ${pageHeight}`);
-      
-      pagePositions.push({
-        top: pageTop,
-        height: pageHeight
-      });
+    // Calcular la posición relativa al contenedor del PDF
+    const pageRect = pdfPages[0].getBoundingClientRect();
+    const pageTop = pageRect.top - containerRect.top + container.scrollTop;
+    const pageHeight = pageRect.height;
+    
+    console.log(`🔍   Page rect:`, pageRect);
+    console.log(`🔍   Calculated top: ${pageTop}, height: ${pageHeight}`);
+    
+    pagePositions.push({
+      top: pageTop,
+      height: pageHeight
     });
     
     // Actualizar las posiciones de las páginas
@@ -2559,55 +1920,46 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     
     console.log('🔍 Visible pages:', visiblePages.map(p => p.pageNumber));
     
-    // Renderizar áreas de TODAS las páginas visibles
-    // Usar Promise.all para procesar todas las páginas en paralelo
-    await Promise.all(visiblePages.map(async ({ pageElement, pageNumber }) => {
-      // Obtener dimensiones de esta página específica
-      const pageRect = pageElement.getBoundingClientRect();
-      const pageDims = await this.getRealPdfDimensions(pageNumber);
+    const pageRealWidth = dims.realPdfWidth;
+    const pageRealHeight = dims.realPdfHeight;
+    
+    const pageScaleX = canvas.width / pageRealWidth;
+    const pageScaleY = canvas.height / pageRealHeight;
+    
+    // Obtener posición del canvas relativa a esta página
+    const canvasRect = canvas.getBoundingClientRect();
+    const pageOffsetX = pageRect.left - canvasRect.left;
+    const pageOffsetY = pageRect.top - canvasRect.top;
+    
+    // Filtrar áreas de esta página específica
+    const areasForThisPage = this.signatureAreas.filter(area => area.page === this.lastVisitedPage);
+    console.log(`🔍 Rendering ${areasForThisPage.length} areas for page ${this.lastVisitedPage}`);
+    
+    areasForThisPage.forEach((area, index) => {
+      console.log(`🔍 Rendering area ${index + 1}/${areasForThisPage.length} for page ${this.lastVisitedPage}:`, area);
       
-      const pageRealWidth = pageDims.realPdfWidth;
-      const pageRealHeight = pageDims.realPdfHeight;
+      // Convertir coordenadas del PDF (puntos) a coordenadas de pantalla (píxeles)
+      // Convertir Y del sistema PDF (origen abajo) al sistema HTML (origen arriba)
+      const pdfYInverted = pageRealHeight - area.y - area.height;
       
-      // Escalas específicas para esta página
-      const pageScaleX = pageRect.width / pageRealWidth;
-      const pageScaleY = pageRect.height / pageRealHeight;
+      const screenX = (area.x * pageScaleX) + pageOffsetX;
+      const screenY = (pdfYInverted * pageScaleY) + pageOffsetY;
+      const screenWidth = area.width * pageScaleX;
+      const screenHeight = area.height * pageScaleY;
       
-      // Obtener posición del canvas relativa a esta página
-      const canvasRect = canvas.getBoundingClientRect();
-      const pageOffsetX = pageRect.left - canvasRect.left;
-      const pageOffsetY = pageRect.top - canvasRect.top;
+      console.log(`🔍 Drawing area ${area.id} on page ${area.page}:`);
+      console.log(`🔍   PDF coordinates: x=${area.x}, y=${area.y}, w=${area.width}, h=${area.height}`);
+      console.log(`🔍   PDF Y inverted: ${pdfYInverted}`);
+      console.log(`🔍   Screen coordinates: x=${screenX}, y=${screenY}, w=${screenWidth}, h=${screenHeight}`);
+      console.log(`🔍   Page offset: x=${pageOffsetX}, y=${pageOffsetY}`);
       
-      // Filtrar áreas de esta página específica
-      const areasForThisPage = this.signatureAreas.filter(area => area.page === pageNumber);
-      console.log(`🔍 Rendering ${areasForThisPage.length} areas for page ${pageNumber}`);
-      
-      areasForThisPage.forEach((area, index) => {
-        console.log(`🔍 Rendering area ${index + 1}/${areasForThisPage.length} for page ${pageNumber}:`, area);
-        
-        // Convertir coordenadas del PDF (puntos) a coordenadas de pantalla (píxeles)
-        // Convertir Y del sistema PDF (origen abajo) al sistema HTML (origen arriba)
-        const pdfYInverted = pageRealHeight - area.y - area.height;
-        
-        const screenX = (area.x * pageScaleX) + pageOffsetX;
-        const screenY = (pdfYInverted * pageScaleY) + pageOffsetY;
-        const screenWidth = area.width * pageScaleX;
-        const screenHeight = area.height * pageScaleY;
-        
-        console.log(`🔍 Drawing area ${area.id} on page ${area.page}:`);
-        console.log(`🔍   PDF coordinates: x=${area.x}, y=${area.y}, w=${area.width}, h=${area.height}`);
-        console.log(`🔍   PDF Y inverted: ${pdfYInverted}`);
-        console.log(`🔍   Screen coordinates: x=${screenX}, y=${screenY}, w=${screenWidth}, h=${screenHeight}`);
-        console.log(`🔍   Page offset: x=${pageOffsetX}, y=${pageOffsetY}`);
-        
-        // Verificar que las coordenadas estén dentro del canvas
-        if (screenX >= 0 && screenY >= 0 && screenWidth > 0 && screenHeight > 0) {
-          this.drawAreaOnCanvas(area, screenX, screenY, screenWidth, screenHeight);
-        } else {
-          console.log(`🔍 Area ${area.id} coordinates out of bounds, skipping`);
-        }
+      // Verificar que las coordenadas estén dentro del canvas
+      if (screenX >= 0 && screenY >= 0 && screenWidth > 0 && screenHeight > 0) {
+        this.drawAreaOnCanvas(area, screenX, screenY, screenWidth, screenHeight);
+      } else {
+        console.log(`🔍 Area ${area.id} coordinates out of bounds, skipping`);
+      }
       });
-    }));
 
     // Dibujar el área actual si está dibujando SOLO en la página visible
     if (this.currentRect && this.isDragging) {
@@ -2735,9 +2087,13 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const canvas = this.signatureCanvasRef.nativeElement;
     const container = this.pdfContainerRef.nativeElement;
     
-    // Detectar en qué página se está haciendo clic
-    const { pageElement, pageNumber } = this.getPageForPoint(event.clientX, event.clientY);
-    console.log('🔍 Click detected on page:', pageNumber);
+    // Usar la página actual del paginador en lugar de detectar por posición del mouse
+    // ya que solo mostramos una página a la vez
+    const pageNumber = this.lastVisitedPage;
+    console.log('🔍 Using current page from paginator:', pageNumber);
+    
+    // Detectar en qué página se está haciendo clic (solo para obtener el pageElement)
+    const { pageElement } = this.getPageForPoint(event.clientX, event.clientY);
     
     if (!pageElement) {
       console.warn('🔍 No page element found for click');
@@ -2753,7 +2109,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const pageY = event.clientY - pageRect.top;
     
     // Guardar también información de la página para uso posterior
-    this.currentDefiningPageNumber = pageNumber;
     this.currentDefiningPageRect = pageRect;
     
     // Calcular coordenadas relativas al canvas (para el dibujo)
@@ -2771,7 +2126,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       height: 0,
       pageX: pageX,  // Coordenada X relativa a la página
       pageY: pageY,  // Coordenada Y relativa a la página
-      pageNumber: pageNumber  // Número de página
+      pageNumber: pageNumber  // Número de página desde el paginador
     };
     
     console.log('Canvas MouseDown - Mouse position:', event.clientX, event.clientY);
@@ -2852,7 +2207,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     if (shouldFinish) {
       // Reasignar snapshot para finishDefiningArea
       this.currentRect = finalize as any;
-      this.finishDefiningArea();
+      this.finishDefiningArea(this.lastVisitedPage, this.signatureAreas);
     }
     
     // Restaurar cursor
@@ -2873,9 +2228,12 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const canvas = this.signatureCanvasRef.nativeElement;
     const touch = event.touches[0];
     
-    // Detectar en qué página se está tocando
-    const { pageElement, pageNumber } = this.getPageForPoint(touch.clientX, touch.clientY);
-    console.log('🔍 Touch detected on page:', pageNumber);
+    // Usar la página actual del paginador en lugar de detectar por posición
+    const pageNumber = this.currentPage;
+    console.log('🔍 Touch detected, using current page from paginator:', pageNumber);
+    
+    // Detectar en qué página se está tocando (solo para obtener el pageElement)
+    const { pageElement } = this.getPageForPoint(touch.clientX, touch.clientY);
     
     if (!pageElement) {
       console.warn('🔍 No page element found for touch');
@@ -2890,7 +2248,6 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     const pageY = touch.clientY - pageRect.top;
     
     // Guardar también información de la página para uso posterior
-    this.currentDefiningPageNumber = pageNumber;
     this.currentDefiningPageRect = pageRect;
     
     // Calcular coordenadas relativas al canvas (para el dibujo)
@@ -2908,7 +2265,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
       height: 0,
       pageX: pageX,  // Coordenada X relativa a la página
       pageY: pageY,  // Coordenada Y relativa a la página
-      pageNumber: pageNumber  // Número de página
+      pageNumber: pageNumber  // Número de página desde el paginador
     };
   }
 
@@ -2968,7 +2325,7 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.currentRect = null;
     if (shouldFinish) {
       this.currentRect = finalize as any;
-      this.finishDefiningArea();
+      this.finishDefiningArea(this.lastVisitedPage, this.signatureAreas);
     }
   }
 
@@ -3654,5 +3011,37 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     ctx.fillText('Mostrando PDF original', x + 10, y + 40);
     
     console.log('✅ [SIGNATURE-PAGE] Anotación de error dibujada en el canvas');
+  }
+
+  goToFirstPage(): void {
+    if (this.currentPage !== 1) {
+      this.currentPage = 1;
+      this.lastVisitedPage = 1;
+      this.renderCanvas();
+    }
+  }
+
+  goToPreviousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.lastVisitedPage = this.currentPage;
+      this.renderCanvas();
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.lastVisitedPage = this.currentPage;
+      this.renderCanvas();
+    }
+  }
+
+  goToLastPage(): void {
+    if (this.currentPage !== this.totalPages) {
+      this.currentPage = this.totalPages;
+      this.lastVisitedPage = this.currentPage;
+      this.renderCanvas();
+    }
   }
 } 

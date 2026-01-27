@@ -1,38 +1,4 @@
 <div class="signature-page-container">
-  <!-- Toolbar -->
-  <mat-toolbar class="signature-toolbar">
-    <button mat-icon-button (click)="goBack()" class="back-button">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <span class="toolbar-title">Definir Áreas de Firma - Operación #{{ operationId }}</span>
-    <span class="spacer"></span>
-    
-    <!-- Indicador de página -->
-    <div class="page-indicator" *ngIf="!isLoading && totalPages > 1">
-      <span class="page-text">Página {{ currentPage }} de {{ totalPages }}</span>
-    </div>
-    
-    <!-- Botón de aceptar -->
-    <button 
-      mat-icon-button 
-      color="accent"
-      (click)="acceptSignatureAreas()"
-      class="accept-btn">
-      <mat-icon>check</mat-icon>
-    </button>
-    
-    <!-- Botón de cancelar definición de área -->
-    <button 
-      *ngIf="isDefiningArea"
-      mat-raised-button 
-      color="warn" 
-      (click)="cancelAreaDefinition()"
-      class="cancel-btn">
-      <mat-icon>close</mat-icon>
-      Cancelar
-    </button>
-  </mat-toolbar>
-
   <!-- Loading spinner -->
   <div *ngIf="isLoading" class="loading-container">
     <mat-spinner></mat-spinner>
@@ -42,7 +8,6 @@
   <!-- Main content - PDF centered -->
   <div *ngIf="!isLoading" class="main-content">
     <!-- PDF Viewer Section - Centrado -->
-    <div class="pdf-section">
       <div class="pdf-container" 
            [class.defining-area]="isDefiningArea"
            #pdfContainer 
@@ -50,6 +15,26 @@
         <div *ngIf="isLoadingPdf" class="pdf-loading">
           <mat-spinner diameter="40"></mat-spinner>
           <p>Cargando PDF...</p>
+        </div>
+        <div class="custom-pdf-toolbar">
+          <button mat-icon-button (click)="goBack()" aria-label="Volver">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="toolbar-nav-group">
+            <button mat-icon-button (click)="goToFirstPage()" [disabled]="currentPage === 1">
+              <mat-icon>first_page</mat-icon>
+            </button>
+            <button mat-icon-button (click)="goToPreviousPage()" [disabled]="currentPage === 1">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span class="page-indicator">{{ currentPage }} / {{ totalPages }}</span>
+            <button mat-icon-button (click)="goToNextPage()" [disabled]="currentPage === totalPages">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <button mat-icon-button (click)="goToLastPage()" [disabled]="currentPage === totalPages">
+              <mat-icon>last_page</mat-icon>
+            </button>
+          </div>
         </div>
         
         <!-- PDF Viewer -->
@@ -60,7 +45,7 @@
           [showToolbar]="false"
           [showSidebarButton]="false"
           [showFindButton]="false"
-          [showPagingButtons]="false"
+          [showPagingButtons]="true"
           [showZoomButtons]="false"
           [showPresentationModeButton]="false"
           [showPrintButton]="false"
@@ -70,33 +55,17 @@
           [showHandToolButton]="false"
           [showSpreadButton]="false"
           [showPropertiesButton]="false"
+          [page]="currentPage"
+          [scrollMode]="3"
+          [spread]="'off'"
           (pdfLoadingStarted)="isLoadingPdf = true"
           (pdfLoadingEnded)="onPdfLoaded($event)"
           (pagesLoaded)="onPagesLoaded($event)"
+          (pageChange)="onPdfPageChange($event)"
+          (pageRendered)="onPdfPageRendered($event)"
           (error)="onPdfError($event)"
           class="pdf-viewer">
         </ngx-extended-pdf-viewer>
-
-        <!-- Botones laterales de navegación -->
-        <button
-          class="side-nav left"
-          mat-fab
-          color="primary"
-          (click)="prevPage()"
-          [disabled]="getButtonStates().prevDisabled"
-          aria-label="Anterior">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-
-        <button
-          class="side-nav right"
-          mat-fab
-          color="primary"
-          (click)="nextPage()"
-          [disabled]="getButtonStates().nextDisabled"
-          aria-label="Siguiente">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
 
         <!-- Canvas overlay para áreas de firma -->
         <canvas 
@@ -120,7 +89,6 @@
             Arrastra para dibujar el área rectangular
           </div>
         </div>
-      </div>
     </div>
   </div>
-</div> 
+</div>

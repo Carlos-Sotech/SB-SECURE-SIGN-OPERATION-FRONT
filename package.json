@@ -3,9 +3,9 @@
   "version": "2025.10.01.2312",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0",
-    "start:dev": "ng serve --host 0.0.0.0 --configuration development",
-    "start:prod": "ng serve --host 0.0.0.0 --configuration production",
+    "start": "node generate-env.js && ng serve --host 0.0.0.0",
+    "start:dev": "node generate-env.js && ng serve --host 0.0.0.0 --configuration development",
+    "start:prod": "node generate-env.js && ng serve --host 0.0.0.0 --configuration production",
     "build": "ng build",
     "build:dev": "ng build --configuration development",
     "build:prod": "node update-version.js frontend && ng build --configuration production",

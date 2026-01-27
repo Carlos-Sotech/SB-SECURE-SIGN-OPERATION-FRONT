@@ -29,10 +29,12 @@ import { OperationService } from '../../services/operation.service';
 import { SignatureService } from '../../services/signature.service';
 import { PartyService } from '../../services/party.service';
 import { OperationSearchService } from '../../services/operation-search.service';
+import { CompanyService } from '../../services/company.service';
 import { UserReadDto } from '../../models/user-read.dto';
 import { Role } from '../../models/role.enum';
 import { OperationReadDto, OperationStatusEnum, OperationTypeEnum } from '../../models/operation.model';
 import { PaginatedResultDto, OperationSearchDto } from '../../models/operation-search.dto';
+import { Company } from '../../models/company.model';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -43,6 +45,7 @@ import { OperationFormComponent } from '../operation-form/operation-form.compone
 import { OperationViewComponent } from '../operation-view/operation-view.component';
 import { OperationSearchComponent } from '../operation-search/operations-filters-component';
 import { LaunchOperationModalComponent } from '../launch-operation-modal/launch-operation-modal.component';
+import { CompanyFormComponent } from '../company-form/company-form.component';
 
 @Component({
   selector: 'app-user-list',
@@ -71,6 +74,12 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   displayedUsers: UserReadDto[] = [];  // Para mostrar en la tabla (filtrada o no)
   isLoadingUsers = false;
   usersError: string | null = null;
+  
+  // Propiedades para paginación de usuarios
+  totalUsers = 0;
+  usersPageSize = 25;
+  usersPageIndex = 0;
+  
   public Role = Role;
   public OperationTypeEnum = OperationTypeEnum;
   public OperationStatusEnum = OperationStatusEnum;
@@ -94,8 +103,18 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   // Variable para controlar qué pestaña está activa (0 = Usuarios, 1 = Operaciones)
   activeTabIndex = 0;
 
+  // Propiedades para empresas
+  companies: Company[] = [];
+  displayedCompanies: Company[] = [];
+  totalCompanies = 0;
+  companiesPageSize = 10;
+  companiesPageIndex = 0;
+  isLoadingCompanies = false;
+  companiesError: string | null = null;
+
   displayedColumns: string[] = ['username', 'email', 'role', 'companyName', 'createdAt', 'actions'];
   operationsDisplayedColumns: string[] = ['id', 'operationType', 'descripcionOperacion', 'status', 'user', 'minutesAlive', 'createdAt', 'actions'];
+  companyDisplayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'createdAt', 'actions'];
 
   private subscriptions: Subscription = new Subscription();
  
@@ -104,6 +123,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     private operationService: OperationService,
     private signatureService: SignatureService,
     private partyService: PartyService,
+    private companyService: CompanyService,
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private router: Router,
@@ -134,9 +154,23 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Check sessionStorage for tab flag
+    const showOperacionesTab = sessionStorage.getItem('showOperacionesTab');
+    if (showOperacionesTab === 'true') {
+      this.activeTabIndex = 1; // Set to Operaciones tab
+      sessionStorage.removeItem('showOperacionesTab');
+    }
     this.subscriptions.add(
       this.authService.currentUser.subscribe(user => {
         this.currentUser = user;
+        
+        // Si es usuario normal, redirigir a operation-list
+        if (user && user.role === Role.Usuario) {
+          console.log('[UserListComponent] Usuario normal detectado, redirigiendo a operation-list');
+          this.router.navigate(['/operation-list']);
+          return;
+        }
+        
         // Si el usuario cambia (ej. de null a logueado), recargar y refiltrar usuarios.
         // También es útil si los datos del currentUser (como companyId) se cargan asíncronamente.
         this.loadUsers();
@@ -144,6 +178,11 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
         // Si es superusuario o administrador, cargar las operaciones normales de su empresa
         if ((user?.role === Role.Superusuario || user?.role === Role.Administrador) && user.companyId) {
           this.loadCompanyOperations();
+        }
+
+        // Si es administrador, cargar empresas
+        if (user?.role === Role.Administrador) {
+          this.loadCompanies();
         }
       })
     );
@@ -183,36 +222,142 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   applyUserFilter(): void {
     if (!this.currentUser) {
       console.log('[UserListComponent] No hay currentUser para filtrar, mostrando todos (o ninguno si allUsersFromApi está vacío).');
-      this.displayedUsers = [...this.allUsersFromApi]; // Mostrar todos si no hay usuario para filtrar (poco probable en admin)
+      const allUsers = [...this.allUsersFromApi];
+      this.totalUsers = allUsers.length;
+      this.displayedUsers = this.paginateUsers(allUsers);
       return;
     }
 
+    let filteredUsers: UserReadDto[] = [];
+
     if (this.currentUser.role === Role.Administrador) {
       console.log('[UserListComponent] Usuario es Administrador, mostrando todos los usuarios.');
-      this.displayedUsers = [...this.allUsersFromApi]; // Copiar para evitar modificar el original
+      filteredUsers = [...this.allUsersFromApi];
     } else if (this.currentUser.role === Role.Superusuario) {
       if (this.currentUser.companyId) {
         console.log(`[UserListComponent] Usuario es Superusuario (Empresa ID: ${this.currentUser.companyId}). Filtrando usuarios.`);
-        this.displayedUsers = this.allUsersFromApi.filter(user =>
+        filteredUsers = this.allUsersFromApi.filter(user =>
           user.companyId === this.currentUser?.companyId &&
           (user.role === Role.Usuario || user.role === Role.Superusuario)
         );
       } else {
         console.warn('[UserListComponent] Superusuario no tiene companyId. No se mostrarán usuarios.');
         this.snackBar.open('No tienes una empresa asignada para ver usuarios.', 'Cerrar', { duration: 7000, panelClass: ['error-snackbar']});
-        this.displayedUsers = []; // No mostrar nada si el Superusuario no tiene empresa
+        filteredUsers = [];
       }
     } else {
-      // Otros roles (ej. Usuario normal) no deberían ver esta lista, o ver una lista vacía.
-      // El AuthGuard debería prevenir que lleguen aquí, pero como medida de seguridad:
       console.log(`[UserListComponent] Rol ${this.currentUser.role} no tiene permisos para ver esta lista.`);
-      this.displayedUsers = [];
+      filteredUsers = [];
     }
-    // Forzar la actualización de la tabla si la referencia del array no cambia (aunque con el spread operator debería)
-    // this.displayedUsers = [...this.displayedUsers];
+    
+    this.totalUsers = filteredUsers.length;
+    this.displayedUsers = this.paginateUsers(filteredUsers);
     console.log('[UserListComponent] Usuarios a mostrar después del filtro:', this.displayedUsers);
   }
 
+  paginateUsers(users: UserReadDto[]): UserReadDto[] {
+    const startIndex = this.usersPageIndex * this.usersPageSize;
+    const endIndex = startIndex + this.usersPageSize;
+    return users.slice(startIndex, endIndex);
+  }
+
+  onUsersPageChange(event: PageEvent): void {
+    this.usersPageSize = event.pageSize;
+    this.usersPageIndex = event.pageIndex;
+    this.applyUserFilter();
+  }
+
+  // --- Métodos para gestión de empresas ---
+  loadCompanies(): void {
+    if (this.currentUser?.role !== Role.Administrador) {
+      return;
+    }
+
+    this.isLoadingCompanies = true;
+    this.companiesError = null;
+
+    this.subscriptions.add(
+      this.companyService.getCompanies().subscribe({
+        next: (companies) => {
+          this.companies = companies;
+          this.totalCompanies = companies.length;
+          this.updateDisplayedCompanies();
+          this.isLoadingCompanies = false;
+        },
+        error: (error) => {
+          console.error('[UserListComponent] Error al cargar empresas:', error);
+          this.companiesError = 'Error al cargar las empresas. Por favor, intente de nuevo.';
+          this.isLoadingCompanies = false;
+          this.snackBar.open('Error al cargar empresas', 'Cerrar', { duration: 3000 });
+        }
+      })
+    );
+  }
+
+  updateDisplayedCompanies(): void {
+    const startIndex = this.companiesPageIndex * this.companiesPageSize;
+    const endIndex = startIndex + this.companiesPageSize;
+    this.displayedCompanies = this.companies.slice(startIndex, endIndex);
+  }
+
+  onCompaniesPageChange(event: PageEvent): void {
+    this.companiesPageSize = event.pageSize;
+    this.companiesPageIndex = event.pageIndex;
+    this.updateDisplayedCompanies();
+  }
+
+  openCreateCompanyDialog(): void {
+    const dialogRef = this.dialog.open(CompanyFormComponent, {
+      width: '600px',
+      data: null // null indica que es creación, no edición
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadCompanies(); // Recargar la lista después de crear
+      }
+    });
+  }
+
+  openEditCompanyDialog(company: Company): void {
+    const dialogRef = this.dialog.open(CompanyFormComponent, {
+      width: '600px',
+      data: company // Pasar la empresa directamente, no dentro de un objeto
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadCompanies();
+      }
+    });
+  }
+
+  deleteCompany(company: Company): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Confirmar eliminación',
+        message: `¿Está seguro de que desea eliminar la empresa "${company.name}"?`
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.subscriptions.add(
+          this.companyService.deleteCompany(company.id).subscribe({
+            next: () => {
+              this.snackBar.open('Empresa eliminada exitosamente', 'Cerrar', { duration: 3000 });
+              this.loadCompanies();
+            },
+            error: (error) => {
+              console.error('[UserListComponent] Error al eliminar empresa:', error);
+              this.snackBar.open('Error al eliminar la empresa', 'Cerrar', { duration: 3000 });
+            }
+          })
+        );
+      }
+    });
+  }
 
   // --- Métodos para el Sidenav ---
   navigateToCompanies(): void {

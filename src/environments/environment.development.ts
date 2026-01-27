@@ -3,7 +3,7 @@ declare const window: any;
 
 export const environment = {
   production: false,
-  apiUrl: window?.env?.API_URL || 'http://localhost:5073/api',
+  apiUrl: window?.env?.API_URL || 'http://localhost:32703/api',
   
   // WebSocket Configuration
   websocket: {

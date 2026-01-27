@@ -1,43 +1,18 @@
 <div class="admin-page-container">
-  <mat-toolbar color="primary" class="admin-toolbar">
-    <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle Sidenav">
-      <mat-icon>menu</mat-icon>
-    </button>
-    <span>Panel de Operaciones - {{currentUser?.username}}</span>
-    <span class="toolbar-spacer"></span>
-    <button mat-flat-button color="accent" (click)="openCreateOperationDialog()">
-      <mat-icon>add_task</mat-icon> Nueva Operación
-    </button>
-  </mat-toolbar>
-
   <app-operation-search 
     (searchChanged)="onSearchChanged($event)"
     *ngIf="currentUser">
   </app-operation-search>
 
   <mat-sidenav-container class="admin-sidenav-container">
-    <mat-sidenav #drawer mode="side" [opened]="false" class="admin-sidenav">
-      <mat-nav-list>
-        <h3 matSubheader>Gestión</h3>
-        <mat-divider></mat-divider>
-        <a mat-list-item (click)="logout()">
-          <mat-icon matListItemIcon>exit_to_app</mat-icon>
-          <span matListItemTitle>Cerrar Sesión</span>
-        </a>
-      </mat-nav-list>
-    </mat-sidenav>
-
     <mat-sidenav-content class="admin-sidenav-content">
       <div class="content-wrapper">
-        <div class="welcome-message" *ngIf="currentUser">
-          <p>Gestionando operaciones como <strong>{{ currentUser.username }}</strong> (Rol: {{ currentUser.role }}) - Empresa: {{ currentUser.companyName }}</p>
-        </div>
-        <div class="welcome-message" *ngIf="!currentUser">
-          <p>Panel de Operaciones</p>
-        </div>
-
         <mat-card class="data-card">
           <mat-card-header>
+            <button mat-flat-button color="accent" (click)="openCreateOperationDialog()" 
+                    *ngIf="currentUser && (currentUser.role === Role.Usuario || currentUser.role === Role.Superusuario)">
+              <mat-icon>add_task</mat-icon> Nueva Operación
+            </button>
             <button mat-icon-button (click)="loadOperations()" matTooltip="Recargar lista">
               <mat-icon>refresh</mat-icon>
             </button>

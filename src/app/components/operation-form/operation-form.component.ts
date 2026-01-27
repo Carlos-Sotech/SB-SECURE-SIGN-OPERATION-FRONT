@@ -14,6 +14,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { take } from 'rxjs/operators';
 
@@ -64,6 +65,7 @@ export interface SignatureArea {
     MatCheckboxModule,
     MatCardModule,
     MatChipsModule,
+    MatTooltipModule,
     NgxExtendedPdfViewerModule
   ],
   templateUrl: './operation-form.component.html',
@@ -107,24 +109,9 @@ export class OperationFormComponent implements OnInit, OnDestroy {
   isLoadingPdf = false;
   signatureAreas: SignatureArea[] = [];
   
-  // Variables para el canvas overlay (solo visualización)
-  @ViewChild('signatureCanvas', { static: false }) signatureCanvasRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('pdfContainer', { static: false }) pdfContainerRef!: ElementRef<HTMLDivElement>;
-  
-  private canvasCtx: CanvasRenderingContext2D | null = null;
-  
-  // Variables para los listeners
-  private viewerContainerScrollListener: (() => void) | null = null;
-  private viewerContainerRetryCount = 0;
-  private readonly maxViewerContainerRetries = 20; // Máximo 10 segundos (20 * 500ms)
-  private resizeObserver: ResizeObserver | null = null;
-  
-  // Variables para las posiciones de las páginas
-  private pagePositions: { top: number, height: number }[] = [];
-  
   // Variables para el estado de lanzamiento
   isLaunchingOperation = false;
-
+  operationId: number | null = null;
   currentPage: number = 1;
 
   // Signal para manejar actualizaciones de agreements
@@ -147,6 +134,9 @@ export class OperationFormComponent implements OnInit, OnDestroy {
   }
 
   currentUser: UserReadDto | null = null;
+  
+  // Variables para drag and drop
+  isDraggingOver = false;
 
   ngOnInit(): void {
     this.authService.currentUser.subscribe((user) => {
@@ -155,32 +145,12 @@ export class OperationFormComponent implements OnInit, OnDestroy {
 
     // Subscribe to isNecessaryConfirmReading changes to enable/disable related fields
     this.operationForm.get('isNecessaryConfirmReading')?.valueChanges.subscribe(confirmed => {
-      console.log('🔍 isNecessaryConfirmReading changed to:', confirmed);
       this.onIsNecessaryConfirmReadingChange(confirmed);
-    });
-
-    // Subscribe to readingAllPages changes for debugging
-    this.operationForm.get('readingAllPages')?.valueChanges.subscribe(allPages => {
-      console.log('🔍 readingAllPages changed to:', allPages);
-    });
-
-    // Subscribe to readingText changes for debugging
-    this.operationForm.get('readingText')?.valueChanges.subscribe(text => {
-      console.log('🔍 readingText changed to:', text);
-    });
-    
-    // Subscribe to form value changes to trigger validation updates
-    this.operationForm.valueChanges.subscribe(() => {
-      // Forzar la detección de cambios para actualizar el estado del botón
-      this.cdr.detectChanges();
     });
     
     // Subscribe to operationType changes specifically for remote operation validation
     this.operationForm.get('operationType')?.valueChanges.subscribe(operationType => {
-      console.log('🔍 Operation type changed to:', operationType);
       this.onOperationTypeChange(operationType);
-      // Forzar la validación cuando cambie el tipo de operación
-      this.cdr.detectChanges();
     });
 
     console.log('🔍 === OPERATION FORM INITIALIZATION ===');
@@ -189,6 +159,7 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     console.log('🔍 isEdit flag:', this.data?.isEdit);
     console.log('🔍 isEdit type:', typeof this.data?.isEdit);
     console.log('🔍 Operation ID:', this.data?.operation?.id);
+    this.operationId = this.data?.operation?.id ?? null;
     
     // Si solo tenemos el id de la operación, cargar los datos completos antes de inicializar el formulario
     if (this.data?.operation && Object.keys(this.data.operation).length === 1 && this.data.operation.id) {
@@ -408,11 +379,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
           console.log(`🔍 Party ${party.id} (${party.firstName} ${party.lastName}): status = "${party.status}"`);
         });
         console.log('🔍 Signature areas recreated:', this.signatureAreas);
-        
-        // Configurar el canvas después de cargar los parties
-        setTimeout(() => {
-          this.resizeCanvasToPdfPage();
-        }, 200); // Reducido de 500ms a 200ms para mejor rendimiento
       },
       error: (err) => {
         console.error('Error loading parties:', err);
@@ -454,20 +420,10 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     });
     
     console.log('🔍 Final signature areas:', this.signatureAreas);
-    
-    // Forzar el renderizado del canvas después de recrear las áreas
-    setTimeout(() => {
-      this.renderCanvas();
-    }, 100);
   }
 
   // Métodos para manejar el canvas overlay (similar al signature-page)
   ngAfterViewInit(): void {
-    // Agregar listener para el scroll del viewerContainer
-    setTimeout(() => {
-      this.setupViewerContainerScrollListener();
-    }, 1000);
-
     // Si estamos en modo edición, hacer scroll automático a las secciones de Agreements y Parties
     if (this.isEditMode) {
       console.log('🔍 Modal opened in edit mode, scheduling auto-scroll to Agreements and Parties sections');
@@ -523,427 +479,23 @@ export class OperationFormComponent implements OnInit, OnDestroy {
   }
 
   
-  private setupCanvasOverlay(): void {
-    console.log('🔍 setupCanvasOverlay called');
-    if (!this.signatureCanvasRef) {
-      console.log('🔍 signatureCanvasRef not available');
-      return;
-    }
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    console.log('🔍 Canvas element found:', canvas);
-    
-    this.canvasCtx = canvas.getContext('2d');
-    
-    if (!this.canvasCtx) {
-      console.log('🔍 Could not get canvas context');
-      return;
-    }
-    
-    console.log('🔍 Canvas context obtained successfully');
-    
-    // Configurar el canvas para que coincida con el contenedor del PDF
-    this.resizeCanvas();
-    
-    // Configurar el estilo del contexto
-    this.canvasCtx.lineCap = 'round';
-    this.canvasCtx.lineJoin = 'round';
-    
-    console.log('🔍 Canvas overlay setup complete');
-  }
 
-  private resizeCanvas(): void {
-    console.log('🔍 resizeCanvas called');
-    if (!this.signatureCanvasRef || !this.pdfContainerRef) {
-      console.log('🔍 Canvas or container ref not available');
-      return;
-    }
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    const container = this.pdfContainerRef.nativeElement;
-    
-    // Asegurar que el contenedor esté visible ANTES de obtener dimensiones
-    if (container) {
-      container.style.setProperty('display', 'flex', 'important');
-      container.style.setProperty('visibility', 'visible', 'important');
-      container.style.setProperty('width', '100%', 'important');
-      container.style.setProperty('min-width', '280px', 'important');
-      container.style.setProperty('min-height', '200px', 'important');
-    }
-    
-    // Esperar al siguiente frame para que el DOM se actualice
-    requestAnimationFrame(() => {
-      // Obtener dimensiones después de asegurar visibilidad
-      const containerRect = container.getBoundingClientRect();
-      
-      console.log('🔍 Container dimensions:', containerRect.width, 'x', containerRect.height);
-      
-      // Si el contenedor tiene dimensiones 0x0, reintentar (con límite)
-      if (containerRect.width === 0 || containerRect.height === 0) {
-        this.resizeCanvasMethodRetryCount++;
-        if (this.resizeCanvasMethodRetryCount >= this.maxResizeRetries) {
-          console.warn('🔍 Max retries reached for resizeCanvas, stopping');
-          this.resizeCanvasMethodRetryCount = 0; // Reset para futuros intentos
-          return;
-        }
-        console.warn(`🔍 Container dimensions are 0x0 in resizeCanvas, retrying (${this.resizeCanvasMethodRetryCount}/${this.maxResizeRetries})...`);
-        setTimeout(() => {
-          this.resizeCanvas();
-        }, 100);
-        return;
-      }
-      
-      // Resetear contador si tenemos dimensiones válidas
-      this.resizeCanvasMethodRetryCount = 0;
-      
-      // Establecer las dimensiones del canvas para que coincidan exactamente con el contenedor
-      // Usar Math.max para asegurar dimensiones mínimas
-      const width = Math.max(containerRect.width, 280);
-      const height = Math.max(containerRect.height, 200);
-      
-      canvas.width = width;
-      canvas.height = height;
-      
-      // También establecer el estilo CSS para asegurar que se vea correctamente
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
-      
-      console.log('🔍 Canvas resized to:', canvas.width, 'x', canvas.height);
-      console.log('🔍 Canvas style dimensions:', canvas.style.width, 'x', canvas.style.height);
-      
-      // Obtener el contexto del canvas después de redimensionarlo
-      this.canvasCtx = canvas.getContext('2d');
-      if (!this.canvasCtx) {
-        console.error('🔍 No se pudo obtener el contexto del canvas');
-        return;
-      }
-      console.log('🔍 Canvas context obtained:', !!this.canvasCtx);
-      
-      // Redibujar las áreas después del resize
-      this.renderCanvas();
-    });
-  }
 
-  private setupViewerContainerScrollListener(): void {
-    // Buscar el viewerContainer del PDF viewer
-    const viewerContainer = document.querySelector('#viewerContainer') as HTMLElement;
-    if (!viewerContainer) {
-      this.viewerContainerRetryCount++;
-      if (this.viewerContainerRetryCount >= this.maxViewerContainerRetries) {
-        console.warn('Max retries reached for setupViewerContainerScrollListener, stopping');
-        return;
-      }
-      console.log(`viewerContainer no encontrado, reintentando en 500ms (${this.viewerContainerRetryCount}/${this.maxViewerContainerRetries})`);
-      setTimeout(() => {
-        this.setupViewerContainerScrollListener();
-      }, 500);
-      return;
-    }
-    
-    // Resetear el contador cuando se encuentra
-    this.viewerContainerRetryCount = 0;
-    console.log('viewerContainer encontrado, agregando listener de scroll');
-    
-    // Crear el listener de scroll
-    this.viewerContainerScrollListener = () => {
-      // Actualizar la posición del canvas cuando se hace scroll en el viewerContainer
-      setTimeout(() => {
-        this.resizeCanvasToPdfPage();
-      }, 10);
-    };
-    
-    // Agregar listener para el scroll del viewerContainer
-    viewerContainer.addEventListener('scroll', this.viewerContainerScrollListener);
-    
-    // También agregar listener para cambios de tamaño
-    this.resizeObserver = new ResizeObserver(() => {
-      setTimeout(() => {
-        this.resizeCanvasToPdfPage();
-      }, 100);
-    });
-    
-    this.resizeObserver.observe(viewerContainer);
-  }
 
-  private resizeCanvasRetryCount = 0;
-  private readonly maxResizeRetries = 20; // Máximo 20 reintentos (2 segundos)
-  private resizeCanvasMethodRetryCount = 0;
 
-  private resizeCanvasToPdfPage(): void {
-    console.log('🔍 resizeCanvasToPdfPage called');
-    if (!this.signatureCanvasRef || !this.pdfContainerRef) {
-      console.log('🔍 Canvas or container ref not available');
-      return;
-    }
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    const container = this.pdfContainerRef.nativeElement;
-    
-    // Asegurar que el contenedor esté visible ANTES de obtener dimensiones
-    if (container) {
-      container.style.setProperty('display', 'flex', 'important');
-      container.style.setProperty('visibility', 'visible', 'important');
-      container.style.setProperty('width', '100%', 'important');
-      container.style.setProperty('min-width', '280px', 'important');
-      container.style.setProperty('min-height', '200px', 'important');
-    }
-    
-    // Esperar al siguiente frame para que el DOM se actualice
-    requestAnimationFrame(() => {
-      // Obtener las dimensiones del contenedor del PDF después de asegurar visibilidad
-      const containerRect = container.getBoundingClientRect();
-      
-      console.log('🔍 Container dimensions:', containerRect.width, 'x', containerRect.height);
-      
-      // Si el contenedor tiene dimensiones 0x0, significa que aún no está visible/rendered
-      if (containerRect.width === 0 || containerRect.height === 0) {
-        this.resizeCanvasRetryCount++;
-        if (this.resizeCanvasRetryCount >= this.maxResizeRetries) {
-          console.warn('🔍 Max retries reached for resizeCanvasToPdfPage, stopping');
-          this.resizeCanvasRetryCount = 0; // Reset para futuros intentos
-          return;
-        }
-        console.warn(`🔍 Container dimensions are 0x0, retrying (${this.resizeCanvasRetryCount}/${this.maxResizeRetries})...`);
-        // Reintentar después de un pequeño delay
-        setTimeout(() => {
-          this.resizeCanvasToPdfPage();
-        }, 100);
-        return; // Salir temprano si no hay dimensiones válidas
-      }
-      
-      // Resetear contador si tenemos dimensiones válidas
-      this.resizeCanvasRetryCount = 0;
-      
-      // Usar dimensiones mínimas si son muy pequeñas
-      const width = Math.max(containerRect.width, 280);
-      const height = Math.max(containerRect.height, 200);
-      
-      // Configurar el canvas para que ocupe todo el contenedor
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
-      canvas.style.position = 'absolute';
-      canvas.style.left = '0px';
-      canvas.style.top = '0px';
-      canvas.style.zIndex = '1000';
-      canvas.style.pointerEvents = 'auto'; // Permitir interacción para seleccionar áreas de firma
-      
-      console.log('🔍 Canvas configured for PDF container:', width, 'x', height);
-      console.log('🔍 Canvas z-index:', canvas.style.zIndex);
-      console.log('🔍 Canvas pointer events:', canvas.style.pointerEvents);
-      
-      // Obtener el contexto del canvas
-      this.canvasCtx = canvas.getContext('2d');
-      if (!this.canvasCtx) {
-        console.error('🔍 No se pudo obtener el contexto del canvas');
-        return;
-      }
-      console.log('🔍 Canvas context obtained:', !!this.canvasCtx);
-      
-      // Actualizar las posiciones de las páginas y redibujar
-      this.updatePagePositions();
-    });
-  }
 
-  private updatePagePositions(): void {
-    if (!this.signatureCanvasRef || !this.pdfContainerRef) return;
-    
-    // Buscar todas las páginas PDF visibles
-    const pdfPages = document.querySelectorAll('.pdf-viewer .page') as NodeListOf<HTMLElement>;
-    if (!pdfPages || pdfPages.length === 0) {
-      console.log('No PDF pages found for position update');
-      return;
-    }
-    
-    const container = this.pdfContainerRef.nativeElement;
-    const containerRect = container.getBoundingClientRect();
-    
-    console.log('Updating page positions:');
-    console.log('Container rect:', containerRect);
-    console.log('Container scroll top:', container.scrollTop);
-    console.log('Number of pages found:', pdfPages.length);
-    
-    const pagePositions: { top: number, height: number }[] = [];
-    
-    pdfPages.forEach((page, index) => {
-      // Calcular la posición relativa al contenedor del PDF
-      const pageRect = page.getBoundingClientRect();
-      const pageTop = pageRect.top - containerRect.top + container.scrollTop;
-      const pageHeight = pageRect.height;
-      
-      console.log(`Page ${index + 1}:`);
-      console.log(`  Page rect:`, pageRect);
-      console.log(`  Calculated top: ${pageTop}, height: ${pageHeight}`);
-      
-      pagePositions.push({
-        top: pageTop,
-        height: pageHeight
-      });
-    });
-    
-    // Actualizar las posiciones de las páginas
-    this.pagePositions = pagePositions;
-    
-    console.log('Final page positions:', this.pagePositions);
-    
-    // Redibujar el canvas con las nuevas posiciones
-    this.renderCanvas();
-  }
 
-  private renderCanvas(): void {
-    console.log('renderCanvas called - canvasCtx:', !!this.canvasCtx, 'signatureCanvasRef:', !!this.signatureCanvasRef);
-    if (!this.canvasCtx || !this.signatureCanvasRef) return;
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
-    
-    // Limpiar el canvas
-    this.canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Obtener las dimensiones reales del PDF desde el visor
-    const pdfPages = document.querySelectorAll('.pdf-viewer .page') as NodeListOf<HTMLElement>;
-    if (pdfPages.length === 0) {
-      console.log('No PDF pages found for rendering');
-      return;
-    }
-    
-    // Obtener la primera página para calcular las dimensiones base
-    const firstPage = pdfPages[0];
-    const pageRect = firstPage.getBoundingClientRect();
-    
-    // Obtener las dimensiones reales del PDF en puntos
-    const pdfViewport = firstPage.querySelector('.pdfViewport') as HTMLElement;
-    let realPdfWidth = 595; // Default A4 width
-    let realPdfHeight = 842; // Default A4 height
-    
-    if (pdfViewport) {
-      // Intentar obtener las dimensiones reales del PDF
-      const viewportStyle = window.getComputedStyle(pdfViewport);
-      const transform = viewportStyle.transform;
-      if (transform && transform !== 'none') {
-        // Extraer la escala del transform
-        const matrix = transform.match(/matrix\(([^)]+)\)/);
-        if (matrix) {
-          const values = matrix[1].split(',').map(v => parseFloat(v.trim()));
-          if (values.length >= 4) {
-            // La escala está en los primeros dos valores
-            const scaleX = values[0];
-            const scaleY = values[3];
-            
-            // Calcular dimensiones reales del PDF - SIN Math.round para mayor precisión
-            realPdfWidth = pageRect.width / scaleX;
-            realPdfHeight = pageRect.height / scaleY;
-          }
-        }
-      }
-    }
-    
-    // Calcular las escalas de conversión (PDF a pantalla)
-    const scaleX = pageRect.width / realPdfWidth;
-    const scaleY = pageRect.height / realPdfHeight;
 
-    console.log('Render canvas - PDF dimensions:', realPdfWidth, 'x', realPdfHeight);
-    console.log('Render canvas - Scale factors:', scaleX, 'x', scaleY);
-    console.log('Render canvas - Page positions:', this.pagePositions);
 
-    // Dibujar todas las áreas de firma existentes
-    this.signatureAreas.forEach(area => {
-      // Encontrar la página correspondiente
-      const pageIndex = area.page - 1;
-      let pageOffsetY = 0;
-      
-      if (this.pagePositions && this.pagePositions[pageIndex]) {
-        pageOffsetY = this.pagePositions[pageIndex].top;
-      }
-      
-      // Convertir coordenadas del PDF (puntos) a coordenadas de pantalla (píxeles)
-      // Convertir Y del sistema PDF (origen abajo) al sistema HTML (origen arriba)
-      const pdfYInverted = realPdfHeight - area.y - area.height;
-      
-      const screenX = area.x * scaleX;
-      const screenY = pageOffsetY + (pdfYInverted * scaleY);
-      const screenWidth = area.width * scaleX;
-      const screenHeight = area.height * scaleY;
-      
-      console.log(`Drawing area ${area.id} on page ${area.page}:`);
-      console.log(`  PDF coordinates: x=${area.x}, y=${area.y}, w=${area.width}, h=${area.height}`);
-      console.log(`  Page offset Y: ${pageOffsetY}`);
-      console.log(`  PDF Y inverted: ${pdfYInverted}`);
-      console.log(`  Screen coordinates: x=${screenX}, y=${screenY}, w=${screenWidth}, h=${screenHeight}`);
-      
-      this.drawAreaOnCanvas(area, screenX, screenY, screenWidth, screenHeight);
-    });
 
-    // Dibujar anotación de error de procesamiento si es necesario
-    if (this.showProcessingError) {
-      this.drawProcessingErrorAnnotation();
-    }
-  }
-
-  private drawAreaOnCanvas(area: SignatureArea, x: number, y: number, width: number, height: number): void {
-    if (!this.canvasCtx) return;
-    
-    // Dibujar el borde del área
-    this.canvasCtx.strokeStyle = area.color;
-    this.canvasCtx.lineWidth = 2;
-    this.canvasCtx.setLineDash([]); // Áreas definidas sin línea punteada
-    this.canvasCtx.strokeRect(x, y, width, height);
-    this.canvasCtx.setLineDash([]);
-    
-    // Relleno semi-transparente
-    this.canvasCtx.fillStyle = `${area.color}20`; // 20 = 12% opacidad
-    this.canvasCtx.fillRect(x, y, width, height);
-    
-    // Dibujar información del firmante
-    if (area.partyId) {
-      const party = this.parties.find(p => p.id === area.partyId);
-      const partyName = party ? `${party.firstName} ${party.lastName}` : 'Firmante desconocido';
-      this.canvasCtx.fillStyle = '#000';
-      this.canvasCtx.font = '10px Arial';
-      this.canvasCtx.fillText(partyName, x + 5, y + 15);
-      
-      const status = 'Definida';
-      this.canvasCtx.fillStyle = '#4CAF50';
-      this.canvasCtx.font = '8px Arial';
-      this.canvasCtx.fillText(status, x + 5, y + 25);
-    }
-  }
 
   private getRandomColor(): string {
     const colors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  private drawProcessingErrorAnnotation(): void {
-    if (!this.canvasCtx || !this.signatureCanvasRef) return;
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    
-    // Posición de la anotación (esquina superior derecha)
-    const x = canvas.width - 250;
-    const y = 20;
-    const width = 230;
-    const height = 60;
-    
-    // Fondo semi-transparente rojo
-    this.canvasCtx.fillStyle = 'rgba(244, 67, 54, 0.9)';
-    this.canvasCtx.fillRect(x, y, width, height);
-    
-    // Borde rojo
-    this.canvasCtx.strokeStyle = '#F44336';
-    this.canvasCtx.lineWidth = 2;
-    this.canvasCtx.strokeRect(x, y, width, height);
-    
-    // Texto de error
-    this.canvasCtx.fillStyle = '#FFFFFF';
-    this.canvasCtx.font = 'bold 12px Arial';
-    this.canvasCtx.fillText('⚠️ Error procesando firmas', x + 10, y + 20);
-    
-    this.canvasCtx.font = '10px Arial';
-    this.canvasCtx.fillText('Mostrando PDF original', x + 10, y + 35);
-    this.canvasCtx.fillText('sin procesamiento', x + 10, y + 50);
-  }
+
 
   openCreateAgreementDialog(): void {
     if (!this.data?.operation?.id) {
@@ -1164,6 +716,49 @@ export class OperationFormComponent implements OnInit, OnDestroy {
       this.clearPdfFile();
       if (file) {
         this.snackBar.open('Por favor, selecciona un archivo PDF válido.', 'Cerrar', { duration: 3000 });
+      }
+    }
+  }
+
+  // Métodos para drag and drop
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingOver = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      if (file.type === 'application/pdf') {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          this.snackBar.open('El archivo es demasiado grande. Máximo 10MB.', 'Cerrar', { duration: 3000 });
+          return;
+        }
+
+        // Simular el evento de selección de archivo
+        this.originalFile = file;
+        this.selectedFile = file;
+        this.operationForm.get('filePDF')?.setValue(this.originalFile);
+        this.operationForm.get('filePDF')?.markAsTouched();
+        
+        this.isLoadingPdf = true;
+        this.processPdfForDisplay(file);
+      } else {
+        this.snackBar.open('Por favor, arrastra un archivo PDF válido.', 'Cerrar', { duration: 3000 });
       }
     }
   }
@@ -1455,15 +1050,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
 
     // Método para verificar si el formulario es válido
   isFormValid(): boolean {
-    console.log('🔍 === isFormValid() called ===');
-    console.log('🔍 Current form state:', {
-      valid: this.operationForm.valid,
-      dirty: this.operationForm.dirty,
-      touched: this.operationForm.touched,
-      values: this.operationForm.value
-    });
-    
-    // Verificación manual de cada campo
     const minutesAlive = this.operationForm.get('minutesAlive')?.value;
     const operationTypeValue = this.operationForm.get('operationType')?.value;
     const filePDF = this.operationForm.get('filePDF')?.value;
@@ -1472,81 +1058,20 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     const minutesAliveValid = minutesAlive !== null && minutesAlive !== undefined && minutesAlive >= 0;
     const operationTypeValid = operationTypeValue !== null && operationTypeValue !== undefined;
     
-    console.log('🔍 minutesAlive validation details:', {
-      value: minutesAlive,
-      valid: minutesAliveValid,
-      errors: this.operationForm.get('minutesAlive')?.errors,
-      touched: this.operationForm.get('minutesAlive')?.touched,
-      dirty: this.operationForm.get('minutesAlive')?.dirty
-    });
-    
-    console.log('🔍 operationType validation details:', {
-      value: operationTypeValue,
-      valid: operationTypeValid,
-      errors: this.operationForm.get('operationType')?.errors,
-      touched: this.operationForm.get('operationType')?.touched,
-      dirty: this.operationForm.get('operationType')?.dirty
-    });
-    
     // En modo edición, el PDF es opcional a menos que se haya seleccionado uno nuevo
     let filePDFValid = true;
     if (this.isEditMode) {
-      // Si hay un archivo seleccionado, debe ser válido
       const selectedFile = this.operationForm.get('filePDF')?.value;
       if (selectedFile) {
         filePDFValid = selectedFile !== null && selectedFile !== undefined;
       }
     } else {
-      // En modo creación, el PDF es obligatorio
       filePDFValid = filePDF !== null && filePDF !== undefined;
     }
     
-    console.log('🔍 filePDF validation details:', {
-      value: filePDF,
-      valid: filePDFValid,
-      errors: this.operationForm.get('filePDF')?.errors,
-      touched: this.operationForm.get('filePDF')?.touched,
-      dirty: this.operationForm.get('filePDF')?.dirty,
-      isEditMode: this.isEditMode,
-      selectedFile: this.selectedFile
-    });
-    
-    // Verificar que descripcionOperacion sea válido
     const descripcionOperacionValid = descripcionOperacion !== null && descripcionOperacion !== undefined && descripcionOperacion.trim() !== '';
-    console.log('🔍 descripcionOperacion validation details:', {
-      value: descripcionOperacion,
-      valid: descripcionOperacionValid,
-                  errors: this.operationForm.get('descripcionOperacion')?.errors,
-            touched: this.operationForm.get('descripcionOperacion')?.touched,
-            dirty: this.operationForm.get('descripcionOperacion')?.dirty
-    });
     
-    // Debug: mostrar el estado de validación de todos los campos
-    console.log('🔍 Form validation status:');
-    console.log('🔍 minutesAlive valid:', minutesAliveValid);
-    console.log('🔍 operationType valid:', operationTypeValid);
-    console.log('🔍 filePDF valid:', filePDFValid);
-    console.log('🔍 descripcionOperacion valid:', descripcionOperacionValid);
-    console.log('🔍 descripcionOperacion value:', descripcionOperacion);
-    console.log('🔍 isEditMode:', this.isEditMode);
-    console.log('🔍 selectedFile:', this.selectedFile);
-    console.log('🔍 isNecessaryConfirmReading value:', this.operationForm.get('isNecessaryConfirmReading')?.value);
-    console.log('🔍 readingAllPages value:', this.operationForm.get('readingAllPages')?.value);
-    console.log('🔍 readingText value:', this.operationForm.get('readingText')?.value);
-    console.log('🔍 Operation type:', operationTypeValue);
-    console.log('🔍 Parties count:', this.parties.length);
-    
-    // Solo validar los campos básicos del formulario, no el número de firmantes
-    const finalResult = minutesAliveValid && operationTypeValid && filePDFValid && descripcionOperacionValid;
-    console.log('🔍 Final validation result:', finalResult);
-    console.log('🔍 Breakdown:', {
-      minutesAliveValid,
-      operationTypeValid,
-      filePDFValid,
-      descripcionOperacionValid
-    });
-    
-    return finalResult;
+    return minutesAliveValid && operationTypeValid && filePDFValid && descripcionOperacionValid;
   }
 
   // Método de debug para el template
@@ -1587,21 +1112,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     if (this.pdfObjectUrl) {
       URL.revokeObjectURL(this.pdfObjectUrl);
       this.pdfObjectUrl = null;
-    }
-    
-    // Limpiar listeners del viewerContainer
-    if (this.viewerContainerScrollListener) {
-      const viewerContainer = document.querySelector('#viewerContainer') as HTMLElement;
-      if (viewerContainer) {
-        viewerContainer.removeEventListener('scroll', this.viewerContainerScrollListener);
-      }
-      this.viewerContainerScrollListener = null;
-    }
-    
-    // Limpiar ResizeObserver
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
     }
     
     // Limpiar localStorage del PDF si estamos en modo edición
@@ -1670,37 +1180,24 @@ export class OperationFormComponent implements OnInit, OnDestroy {
   }
 
   private onIsNecessaryConfirmReadingChange(confirmed: boolean): void {
-    console.log('🔍 onIsNecessaryConfirmReadingChange called with confirmed:', confirmed);
-    
     const readingAllPagesControl = this.operationForm.get('readingAllPages');
     const readingTextControl = this.operationForm.get('readingText');
     
     if (!confirmed) {
-      console.log('🔍 Clearing readingAllPages and readingText because isNecessaryConfirmReading is false');
-      readingAllPagesControl?.setValue(false);
-      readingTextControl?.setValue('');
+      // Usar emitEvent: false para evitar disparar valueChanges y crear un bucle
+      readingAllPagesControl?.setValue(false, { emitEvent: false });
+      readingTextControl?.setValue('', { emitEvent: false });
     } else {
-      console.log('🔍 isNecessaryConfirmReading is true - keeping existing values or setting defaults');
-      // Si confirmed es true, mantener los valores existentes o establecer valores por defecto
-      // Solo establecer valores por defecto si están vacíos
-      if (readingAllPagesControl?.value === false) {
-        readingAllPagesControl.setValue(false); // Mantener false si ya está false
-      }
+      // Solo establecer valor por defecto si está null o vacío
       if (readingTextControl?.value === null || readingTextControl?.value === '') {
-        readingTextControl.setValue('Es obligatoria la lectura del documento'); // Establecer valor por defecto si está null o vacío
+        readingTextControl.setValue('Es obligatoria la lectura del documento', { emitEvent: false });
       }
+      // No hacer nada con readingAllPagesControl si confirmed es true - mantener el valor del usuario
     }
-    
-    // NO modificar isNecessaryConfirmReading aquí - debe ser independiente
-    console.log('🔍 isNecessaryConfirmReading value after change:', this.operationForm.get('isNecessaryConfirmReading')?.value);
-    console.log('🔍 readingAllPages value after change:', readingAllPagesControl?.value);
-    console.log('🔍 readingText value after change:', readingTextControl?.value);
   }
 
   getAreasForParty(partyId: number): SignatureArea[] {
-    const areas = this.signatureAreas.filter(a => a.partyId === partyId);
-    console.log('🔍 getAreasForParty called for partyId:', partyId, 'returning:', areas);
-    return areas;
+    return this.signatureAreas.filter(a => a.partyId === partyId);
   }
 
   getAllAreas(): SignatureArea[] {
@@ -1721,7 +1218,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
 
   // Métodos para manejar eventos del PDF viewer
   onPdfLoadingStarted(event: any): void {
-    console.log('🔍 [PDF LOADING] PDF loading started:', event);
     // NO establecer isLoadingPdf = true aquí porque el PDF viewer puede disparar
     // este evento múltiples veces durante el renderizado interno, lo que ocultaría
     // el contenedor ya visible. isLoadingPdf solo debe usarse para la carga inicial del archivo.
@@ -1779,19 +1275,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     
     // Forzar detección de cambios después de que el PDF se haya cargado
     this.cdr.detectChanges();
-    
-    setTimeout(() => {
-      console.log('🔍 [PDF LOADING] Resizing canvas to PDF page');
-      this.resizeCanvasToPdfPage();
-      this.renderCanvas();
-    }, 500); // Restaurado a 500ms para estabilidad
-    
-    // También actualizar después de un tiempo adicional para asegurar que el PDF se haya renderizado completamente
-    setTimeout(() => {
-      console.log('🔍 [PDF LOADING] Final canvas resize and render');
-      this.resizeCanvasToPdfPage();
-      this.renderCanvas();
-    }, 1000); // Restaurado a 1000ms para estabilidad
   }
 
 
@@ -1809,14 +1292,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
 
   onPageChange(event: any): void {
     this.currentPage = event.pageNumber || 1;
-    setTimeout(() => {
-      this.resizeCanvasToPdfPage();
-      this.renderCanvas();
-    }, 100);
-    setTimeout(() => {
-      this.resizeCanvasToPdfPage();
-      this.renderCanvas();
-    }, 500);
   }
 
   // Método para verificar si la operación puede ser lanzada

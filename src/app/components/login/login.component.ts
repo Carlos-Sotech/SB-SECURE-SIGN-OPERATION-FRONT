@@ -164,15 +164,25 @@ export class LoginComponent implements OnInit, OnDestroy {
         // Mostrar mensaje de éxito
         this.snackBar.open(response.message || 'Login exitoso!', 'Cerrar', { duration: 3000, panelClass: ['success-snackbar'] });
 
-        // Solución ultra-directa: navegación inmediata sin verificaciones
-        console.log('🔍 [LOGIN] Login exitoso, navegando inmediatamente...');
+        console.log('🔍 [LOGIN] Login exitoso, navegando...');
         
-        // Navegar directamente sin esperar ni verificar nada
-        if (returnUrl) {
-          console.log('🔍 [LOGIN] Navegando a returnUrl:', returnUrl);
+        // Validar returnUrl para evitar bucles de redirección
+        const isValidReturnUrl = returnUrl && 
+                                 !returnUrl.includes('/login') && 
+                                 !returnUrl.includes('/register') &&
+                                 !returnUrl.includes('/set-password') &&
+                                 !returnUrl.includes('/forgot-password') &&
+                                 !returnUrl.includes('/reset-password');
+        
+        // Navegar usando el router de Angular
+        if (isValidReturnUrl) {
+          console.log('🔍 [LOGIN] Navegando a returnUrl válido:', returnUrl);
           this.router.navigateByUrl(returnUrl);
         } else {
-          this.navigateByRoleDirect(user);
+          if (returnUrl) {
+            console.log('🔍 [LOGIN] ReturnUrl inválido o circular, navegando por rol');
+          }
+          this.navigateByRole(user);
         }
       },
       error: (err) => {
@@ -214,12 +224,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       case Role.Superusuario:
         console.log('🔍 [LOGIN] Navegación directa a /user-list para Superusuario');
         window.location.href = '/user-list';
-        this.snackBar.open(`Bienvenido Superusuario ${user.username}. Aquí puedes gestionar usuarios y operaciones de tu empresa.`, 'OK', { duration: 4000 });
         break;
       case Role.Usuario:
         console.log('🔍 [LOGIN] Navegación directa a /operation-list para Usuario');
         window.location.href = '/operation-list';
-        this.snackBar.open(`Bienvenido Usuario ${user.username}. Aquí puedes gestionar tus operaciones.`, 'OK', { duration: 4000 });
         break;
       default:
         console.error('🔍 [LOGIN] Rol no reconocido:', user.role);
@@ -231,6 +239,10 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   private navigateByRole(user: any): void {
     console.log('🔍 [LOGIN] Navegando según rol:', user.role);
+    
+    // Mostrar navbar antes de navegar
+    this.layoutService.setShowNavbar(true);
+    
     switch (user.role) {
       case Role.Administrador:
         console.log('🔍 [LOGIN] Navegando a /user-list para Administrador');
@@ -239,12 +251,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       case Role.Superusuario:
         console.log('🔍 [LOGIN] Navegando a /user-list para Superusuario');
         this.router.navigate(['/user-list']);
-        this.snackBar.open(`Bienvenido Superusuario ${user.username}. Aquí puedes gestionar usuarios y operaciones de tu empresa.`, 'OK', { duration: 4000 });
         break;
       case Role.Usuario:
         console.log('🔍 [LOGIN] Navegando a /operation-list para Usuario');
         this.router.navigate(['/operation-list']);
-        this.snackBar.open(`Bienvenido Usuario ${user.username}. Aquí puedes gestionar tus operaciones.`, 'OK', { duration: 4000 });
         break;
       default:
         console.error('🔍 [LOGIN] Rol no reconocido:', user.role);

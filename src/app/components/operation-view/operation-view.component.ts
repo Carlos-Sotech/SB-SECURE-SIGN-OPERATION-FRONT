@@ -65,6 +65,18 @@ export interface SignatureArea {
   styleUrls: ['./operation-view.component.css']
 })
 export class OperationViewComponent implements OnInit, OnDestroy {
+      goToFirstPage(): void {
+        if (this.currentPage > 1) {
+          this.currentPage = 1;
+        }
+      }
+
+      goToLastPage(): void {
+        if (this.currentPage < this.totalPages) {
+          this.currentPage = this.totalPages;
+        }
+      }
+    totalPages: number = 1;
   // Inyección de dependencias con inject()
   private operationService = inject(OperationService);
   private agreementService = inject(AgreementService);
@@ -134,6 +146,25 @@ onWindowScroll(event: WheelEvent) {
   private pagePositions: { top: number, height: number }[] = [];
 
   currentPage: number = 1;
+
+  goToPreviousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  onPagesLoaded(event: any): void {
+    this.totalPages = event?.pagesCount || 1;
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+  }
 
   currentUser: UserReadDto | null = null;
 
@@ -632,123 +663,6 @@ onWindowScroll(event: WheelEvent) {
     // NO llamar renderCanvas aquí para evitar bucles infinitos
   }
 
-  private renderCanvas(): void {
-    // Prevenir múltiples renders simultáneos
-    if (this.isRendering) {
-      return;
-    }
-    
-    this.isRendering = true;
-    
-    try {
-      console.log('renderCanvas called - canvasCtx:', !!this.canvasCtx, 'signatureCanvasRef:', !!this.signatureCanvasRef);
-      if (!this.canvasCtx || !this.signatureCanvasRef || !this.shouldShowCanvas()) {
-        this.isRendering = false;
-        return;
-      }
-    
-    // Actualizar las posiciones de las páginas antes de renderizar
-    this.updatePagePositions();
-    
-    const canvas = this.signatureCanvasRef.nativeElement;
-    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
-    
-    // Limpiar el canvas
-    this.canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Obtener las dimensiones reales del PDF desde el visor
-    const pdfPages = document.querySelectorAll('.pdf-viewer .page') as NodeListOf<HTMLElement>;
-    if (pdfPages.length === 0) {
-      console.log('No PDF pages found for rendering');
-      return;
-    }
-    
-    console.log('Number of signature areas to render:', this.signatureAreas.length);
-    console.log('Signature areas:', this.signatureAreas);
-    
-    // Obtener la primera página para calcular las dimensiones base
-    const firstPage = pdfPages[0];
-    const pageRect = firstPage.getBoundingClientRect();
-    
-    // Obtener las dimensiones reales del PDF en puntos
-    const pdfViewport = firstPage.querySelector('.pdfViewport') as HTMLElement;
-    let realPdfWidth = 595; // Default A4 width
-    let realPdfHeight = 842; // Default A4 height
-    
-    if (pdfViewport) {
-      // Intentar obtener las dimensiones reales del PDF
-      const viewportStyle = window.getComputedStyle(pdfViewport);
-      const transform = viewportStyle.transform;
-      if (transform && transform !== 'none') {
-        // Extraer la escala del transform
-        const matrix = transform.match(/matrix\(([^)]+)\)/);
-        if (matrix) {
-          const values = matrix[1].split(',').map(v => parseFloat(v.trim()));
-          if (values.length >= 4) {
-            // La escala está en los primeros dos valores
-            const scaleX = values[0];
-            const scaleY = values[3];
-            
-            // Calcular dimensiones reales del PDF - SIN Math.round para mayor precisión
-            realPdfWidth = pageRect.width / scaleX;
-            realPdfHeight = pageRect.height / scaleY;
-          }
-        }
-      }
-    }
-    
-    // Calcular las escalas de conversión (PDF a pantalla)
-    const scaleX = pageRect.width / realPdfWidth;
-    const scaleY = pageRect.height / realPdfHeight;
-
-    console.log('Render canvas - PDF dimensions:', realPdfWidth, 'x', realPdfHeight);
-    console.log('Render canvas - Scale factors:', scaleX, 'x', scaleY);
-    console.log('Render canvas - Page positions:', this.pagePositions);
-
-    // Dibujar todas las áreas de firma existentes
-    this.signatureAreas.forEach((area, index) => {
-      console.log(`Rendering area ${index + 1}/${this.signatureAreas.length}:`, area);
-      
-      // Encontrar la página correspondiente
-      const pageIndex = area.page - 1;
-      let pageOffsetY = 0;
-      
-      if (this.pagePositions && this.pagePositions[pageIndex]) {
-        pageOffsetY = this.pagePositions[pageIndex].top;
-        console.log(`Page ${area.page} offset Y:`, pageOffsetY);
-      } else {
-        console.log(`No page position found for page ${area.page}, using 0`);
-      }
-      
-      // Convertir coordenadas del PDF (puntos) a coordenadas de pantalla (píxeles)
-      // Convertir Y del sistema PDF (origen abajo) al sistema HTML (origen arriba)
-      const pdfYInverted = realPdfHeight - area.y - area.height;
-      
-      const screenX = area.x * scaleX;
-      const screenY = pageOffsetY + (pdfYInverted * scaleY);
-      const screenWidth = area.width * scaleX;
-      const screenHeight = area.height * scaleY;
-      
-      console.log(`Drawing area ${area.id} on page ${area.page}:`);
-      console.log(`  PDF coordinates: x=${area.x}, y=${area.y}, w=${area.width}, h=${area.height}`);
-      console.log(`  Page offset Y: ${pageOffsetY}`);
-      console.log(`  PDF Y inverted: ${pdfYInverted}`);
-      console.log(`  Screen coordinates: x=${screenX}, y=${screenY}, w=${screenWidth}, h=${screenHeight}`);
-      
-      // Verificar que las coordenadas estén dentro del canvas
-      if (screenX >= 0 && screenY >= 0 && screenWidth > 0 && screenHeight > 0) {
-        this.drawAreaOnCanvas(area, screenX, screenY, screenWidth, screenHeight);
-      } else {
-        console.log(`Area ${area.id} coordinates out of bounds, skipping`);
-      }
-    });
-    } catch (error) {
-      console.error('🔍 Error in renderCanvas:', error);
-    } finally {
-      this.isRendering = false;
-    }
-  }
-
   private drawAreaOnCanvas(area: SignatureArea, x: number, y: number, width: number, height: number): void {
     console.log('drawAreaOnCanvas called for area:', area.id, 'at coordinates:', x, y, width, height);
     if (!this.canvasCtx) {
@@ -878,19 +792,6 @@ onWindowScroll(event: WheelEvent) {
     console.log('📄 [PDF VIEWER] PDF source type:', typeof this.pdfSrc);
     console.log('📄 [PDF VIEWER] PDF source starts with blob:', this.pdfSrc?.startsWith('blob:'));
     this.isLoadingPdf = false;
-    if (this.shouldShowCanvas()) {
-      console.log('🔄 [PDF VIEWER] Setting up canvas overlay...');
-      setTimeout(() => {
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 500);
-      
-      // También actualizar después de un tiempo adicional para asegurar que el PDF se haya renderizado completamente
-      setTimeout(() => {
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-      }, 1000);
-    }
   }
 
   onPdfError(error: any): void {
@@ -901,28 +802,11 @@ onWindowScroll(event: WheelEvent) {
     this.snackBar.open('Error al cargar el PDF', 'Cerrar', { duration: 3000 });
   }
   pdfHeight = 0;
-// isOverPdf = false;
 
-onPageRendered(event: any) {
-  
-}
-
-  onPageChange(event: any): void {
+  /*onPageChange(event: any): void {
     this.currentPage = event.pageNumber || 1;
     console.log('📄 [PDF VIEWER] Page changed to:', this.currentPage);
-    if (this.shouldShowCanvas()) {
-      console.log('🔄 [PDF VIEWER] Updating canvas for page change...');
-      // Solo un setTimeout para evitar múltiples llamadas
-      if (this.resizeTimeout) {
-        clearTimeout(this.resizeTimeout);
-      }
-      this.resizeTimeout = setTimeout(() => {
-        this.resizeCanvasToPdfPage();
-        this.renderCanvas();
-        this.resizeTimeout = null;
-      }, 200);
-    }
-  }
+  }*/
 
   downloadSignedPdf(): void {
     if (!this.operation?.id) {
