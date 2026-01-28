@@ -103,30 +103,55 @@
           </div>
           
           <!-- Visor de PDF con ngx-extended-pdf-viewer y overlay de áreas de firma -->
+          <div class="pdf-navigation-toolbar" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+            <button mat-icon-button type="button" (click)="goToFirstPage()" [disabled]="currentPage <= 1" matTooltip="Primera página">
+              <mat-icon>first_page</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="goToPreviousPage()" [disabled]="currentPage <= 1" matTooltip="Página anterior">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span style="margin: 0 12px; font-weight: 500;">Página {{ currentPage }} de {{ totalPages }}</span>
+            <button mat-icon-button type="button" (click)="goToNextPage()" [disabled]="currentPage >= totalPages" matTooltip="Página siguiente">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="goToLastPage()" [disabled]="currentPage >= totalPages" matTooltip="Última página">
+              <mat-icon>last_page</mat-icon>
+            </button>
+          </div>
           <div class="pdf-viewer-container" *ngIf="pdfSrc && !isLoadingPdf" #pdfContainer>
             
-            <ngx-extended-pdf-viewer 
-              [src]="pdfSrc"
-              [height]="'900px'"
-              [showToolbar]="true"
-              [showSidebarButton]="false"
-              [showFindButton]="false"
-              [showPagingButtons]="true"
-              [showZoomButtons]="false"
-              [showPresentationModeButton]="false"
-              [showPrintButton]="false"
-              [showDownloadButton]="false"
-              [showSecondaryToolbarButton]="false"
-              [showRotateButton]="false"
-              [showHandToolButton]="false"
-              [zoom]="'page-height'"
-              [scrollMode]="3"
-              [spread]="'off'"
-              (pdfLoadingStarted)="onPdfLoadingStarted($event)"
-              (pdfLoadingEnded)="onPdfLoaded($event)"
-              (pageRendered)="onPageChange($event)"
-              (error)="onPdfError($event)">
-            </ngx-extended-pdf-viewer>
+            <div class="pdf-wrapper"
+              (mouseenter)="isOverPdf = true"
+              (mouseleave)="isOverPdf = false"
+              (touchstart)="isOverPdf = true"
+              (touchend)="isOverPdf = false">
+              <!-- Custom PDF navigation toolbar -->
+              
+              <ngx-extended-pdf-viewer
+                [src]="pdfSrc"
+                [height]="'900px'"
+                [showToolbar]="false"
+                [showSidebarButton]="false"
+                [showFindButton]="false"
+                [showPagingButtons]="false"
+                [showZoomButtons]="false"
+                [showPresentationModeButton]="false"
+                [showPrintButton]="false"
+                [showDownloadButton]="false"
+                [showSecondaryToolbarButton]="false"
+                [showRotateButton]="false"
+                [showHandToolButton]="false"
+                [zoom]="'page-height'"
+                [scrollMode]="3"
+                [spread]="'off'"
+                [page]="currentPage"
+                (pdfLoadingStarted)="onPdfLoadingStarted($event)"
+                (pdfLoadingEnded)="onPdfLoaded($event)"
+                (pagesLoaded)="onPagesLoaded($event)"
+                (error)="onPdfError($event)"
+                class="pdf-viewer">
+              </ngx-extended-pdf-viewer>
+            </div>
           </div>
           
           <!-- Message when no PDF is loaded -->

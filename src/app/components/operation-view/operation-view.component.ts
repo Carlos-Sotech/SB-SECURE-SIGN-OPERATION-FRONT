@@ -65,18 +65,7 @@ export interface SignatureArea {
   styleUrls: ['./operation-view.component.css']
 })
 export class OperationViewComponent implements OnInit, OnDestroy {
-      goToFirstPage(): void {
-        if (this.currentPage > 1) {
-          this.currentPage = 1;
-        }
-      }
-
-      goToLastPage(): void {
-        if (this.currentPage < this.totalPages) {
-          this.currentPage = this.totalPages;
-        }
-      }
-    totalPages: number = 1;
+  totalPages: number = 1;
   // Inyección de dependencias con inject()
   private operationService = inject(OperationService);
   private agreementService = inject(AgreementService);
@@ -147,6 +136,12 @@ onWindowScroll(event: WheelEvent) {
 
   currentPage: number = 1;
 
+  goToFirstPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage = 1;
+    }
+  }
+  
   goToPreviousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
@@ -156,6 +151,12 @@ onWindowScroll(event: WheelEvent) {
   goToNextPage(): void {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+    }
+  }
+
+  goToLastPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage = this.totalPages;
     }
   }
 

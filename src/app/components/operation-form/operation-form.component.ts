@@ -75,6 +75,43 @@ export interface SignatureArea {
   }
 })
 export class OperationFormComponent implements OnInit, OnDestroy {
+      // Guarda el origen de navegación para restaurar el tab correcto
+      private get signatureOrigin(): string | null {
+        return sessionStorage.getItem('signatureOrigin');
+      }
+    totalPages: number = 1;
+    isOverPdf = false;
+
+    goToFirstPage(): void {
+      if (this.currentPage > 1) {
+        this.currentPage = 1;
+      }
+    }
+
+    goToLastPage(): void {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage = this.totalPages;
+      }
+    }
+
+    goToPreviousPage(): void {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    }
+
+    goToNextPage(): void {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    }
+
+    onPagesLoaded(event: any): void {
+      this.totalPages = event?.pagesCount || 1;
+      if (this.currentPage > this.totalPages) {
+        this.currentPage = this.totalPages;
+      }
+    }
   // Inyección de dependencias con inject()
   private fb = inject(FormBuilder);
   private operationService = inject(OperationService);
@@ -999,6 +1036,10 @@ export class OperationFormComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
+    // Si el origen es user-list, marca el tab de operaciones para restaurar
+    if (this.signatureOrigin === 'user-list') {
+      sessionStorage.setItem('showOperacionesTab', 'true');
+    }
     this.dialogRef.close();
   }
 
@@ -1288,10 +1329,6 @@ export class OperationFormComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
     
     this.snackBar.open('Error al cargar el PDF', 'Cerrar', { duration: 3000 });
-  }
-
-  onPageChange(event: any): void {
-    this.currentPage = event.pageNumber || 1;
   }
 
   // Método para verificar si la operación puede ser lanzada
