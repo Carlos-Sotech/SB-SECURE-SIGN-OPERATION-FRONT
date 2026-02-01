@@ -238,7 +238,7 @@ export class OperationService {
   }
 
   getOperationsByCompany(companyId: number, page: number = 1, pageSize: number = 20): Observable<PaginatedResultDto<OperationReadDto>> {
-    return this.http.get<PaginatedResultDto<OperationReadDto>>(`${environment.apiUrl}/Users/company/${companyId}/operations?page=${page}&pageSize=${pageSize}`)
+    return this.http.get<PaginatedResultDto<OperationReadDto>>(`${environment.apiUrl}/Operations/company/${companyId}/operations?page=${page}&pageSize=${pageSize}`)
       .pipe(catchError(this.handleError));
   }
 

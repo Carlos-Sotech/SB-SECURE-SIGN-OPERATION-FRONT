@@ -88,7 +88,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   companyOperations: OperationReadDto[] = [];
   
   // Propiedades para búsqueda de operaciones
-  currentSearch: OperationSearchDto = { query: '', page: 1, pageSize: 20, showExpired: false };
+  currentSearch: OperationSearchDto = { query: '', page: 1, pageSize: 20, showExpired: true };
   searchResults: OperationReadDto[] = [];
   isSearching = false;
   
@@ -505,27 +505,26 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
       currentUser: this.currentUser
     });
     
-    this.subscriptions.add(
-      this.authService.deleteUser(user.id, this.currentUser?.id).subscribe({
-        next: () => {
-          this.snackBar.open(`Usuario "${user.username}" eliminado exitosamente.`, 'OK', {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
-          // Recargar la lista de usuarios
-          this.loadUsers();
-        },
-        error: (err) => {
-          console.error('Error al eliminar usuario:', err);
-          const backendError = err.error?.message || err.message || 'Error desconocido';
-          const errorMessage = `Error al borrar usuario (${backendError})`;
-          this.snackBar.open(errorMessage, 'OK', {
-            duration: 5000,
-            panelClass: ['error-snackbar']
-          });
-        }
-      })
-    );
+    this.authService.deleteUser(user.id, this.currentUser?.id).subscribe({
+      next: () => {
+        console.log('[UserListComponent] Usuario eliminado exitosamente, recargando lista...');
+        this.snackBar.open(`Usuario "${user.username}" eliminado exitosamente.`, 'OK', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        // Recargar la lista de usuarios
+        this.loadUsers();
+      },
+      error: (err) => {
+        console.error('[UserListComponent] Error al eliminar usuario:', err);
+        const backendError = err.error?.message || err.message || 'Error desconocido';
+        const errorMessage = `Error al borrar usuario (${backendError})`;
+        this.snackBar.open(errorMessage, 'OK', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
   }
 
   logout(): void {
@@ -542,6 +541,10 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.isLoadingOperations = true;
     this.operationsError = null;
+    
+    // Reset search state
+    this.searchResults = [];
+    this.isSearching = false;
 
     this.subscriptions.add(
       this.operationService.getOperationsByCompany(
@@ -661,7 +664,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('🔍 onSearchChanged called with:', searchDto);
     console.log('🔍 Current user role:', this.currentUser?.role);
     
-    this.currentSearch = searchDto;
+    this.currentSearch = { ...searchDto, showExpired: true };
     this.isSearching = !!(searchDto.query && searchDto.query.trim().length > 0);
     
     // Reset to first page for new search
@@ -670,6 +673,10 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isSearching) {
       this.loadSearchResults();
     } else {
+      // Clear search state and reload company operations
+      this.searchResults = [];
+      this.isSearching = false;
+      console.log('🔍 Clearing search, reloading company operations');
       this.loadCompanyOperations();
     }
   }
