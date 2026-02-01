@@ -1,0 +1,68 @@
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+  min-width: 500px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-description {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 24px 24px 16px;
+}
+
+h2[mat-dialog-title] mat-icon {
+  color: #1976d2;
+}
+
+mat-dialog-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0 24px;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px 24px;
+  margin: 0;
+}
+
+mat-form-field {
+  margin-bottom: 8px;
+}
+
+/* Estilo para errores */
+mat-error {
+  font-size: 12px;
+}
+
+/* Hints */
+mat-hint {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Botones */
+button[mat-raised-button] {
+  min-width: 120px;
+}
+
+button[mat-raised-button] mat-icon {
+  margin-right: 4px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

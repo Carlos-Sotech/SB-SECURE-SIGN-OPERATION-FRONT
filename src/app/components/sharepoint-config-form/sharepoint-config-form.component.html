@@ -1,0 +1,105 @@
+<h2 mat-dialog-title>
+  <mat-icon>cloud</mat-icon>
+  {{ isEditMode ? 'Editar' : 'Configurar' }} SharePoint
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="configForm" class="config-form">
+    <p class="form-description">
+      Configura la conexión con SharePoint para almacenar automáticamente los documentos firmados.
+    </p>
+
+    <!-- Tenant ID -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Tenant ID</mat-label>
+      <input matInput 
+             formControlName="tenantId" 
+             placeholder="Ej: contoso.onmicrosoft.com"
+             maxlength="50">
+      <mat-icon matSuffix>domain</mat-icon>
+      <mat-error *ngIf="configForm.get('tenantId')?.invalid">
+        {{ getErrorMessage('tenantId') }}
+      </mat-error>
+      <mat-hint>ID del tenant de Azure AD</mat-hint>
+    </mat-form-field>
+
+    <!-- Client ID -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Client ID (Application ID)</mat-label>
+      <input matInput 
+             formControlName="clientId" 
+             placeholder="Ej: 12345678-1234-1234-1234-123456789012"
+             maxlength="50">
+      <mat-icon matSuffix>key</mat-icon>
+      <mat-error *ngIf="configForm.get('clientId')?.invalid">
+        {{ getErrorMessage('clientId') }}
+      </mat-error>
+      <mat-hint>ID de la aplicación registrada en Azure AD</mat-hint>
+    </mat-form-field>
+
+    <!-- Client Secret -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Client Secret</mat-label>
+      <input matInput 
+             [type]="hideClientSecret ? 'password' : 'text'"
+             formControlName="clientSecret" 
+             [placeholder]="isEditMode ? 'Dejar vacío para mantener el actual' : 'Secreto de la aplicación'"
+             maxlength="500">
+      <button mat-icon-button 
+              matSuffix 
+              type="button"
+              (click)="hideClientSecret = !hideClientSecret"
+              [attr.aria-label]="'Ocultar contraseña'"
+              [attr.aria-pressed]="hideClientSecret">
+        <mat-icon>{{hideClientSecret ? 'visibility_off' : 'visibility'}}</mat-icon>
+      </button>
+      <mat-error *ngIf="configForm.get('clientSecret')?.invalid">
+        {{ getErrorMessage('clientSecret') }}
+      </mat-error>
+      <mat-hint *ngIf="!isEditMode">Secreto de cliente generado en Azure AD</mat-hint>
+      <mat-hint *ngIf="isEditMode">Solo completar si deseas cambiar el secreto actual</mat-hint>
+    </mat-form-field>
+
+    <!-- Site ID -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Site ID</mat-label>
+      <input matInput 
+             formControlName="siteId" 
+             placeholder="Ej: contoso.sharepoint.com,12345678-...,12345678-..."
+             maxlength="300">
+      <mat-icon matSuffix>language</mat-icon>
+      <mat-error *ngIf="configForm.get('siteId')?.invalid">
+        {{ getErrorMessage('siteId') }}
+      </mat-error>
+      <mat-hint>ID del sitio de SharePoint donde se guardarán los documentos</mat-hint>
+    </mat-form-field>
+
+    <!-- Folder -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Carpeta</mat-label>
+      <input matInput 
+             formControlName="folder" 
+             placeholder="Ej: Documentos/Firmados"
+             maxlength="200">
+      <mat-icon matSuffix>folder</mat-icon>
+      <mat-error *ngIf="configForm.get('folder')?.invalid">
+        {{ getErrorMessage('folder') }}
+      </mat-error>
+      <mat-hint>Ruta de la carpeta donde se almacenarán los documentos</mat-hint>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" type="button">
+    Cancelar
+  </button>
+  <button mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()"
+          [disabled]="configForm.invalid"
+          type="button">
+    <mat-icon>save</mat-icon>
+    {{ isEditMode ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

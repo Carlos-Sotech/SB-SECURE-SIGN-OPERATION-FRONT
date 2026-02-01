@@ -30,11 +30,13 @@ import { SignatureService } from '../../services/signature.service';
 import { PartyService } from '../../services/party.service';
 import { OperationSearchService } from '../../services/operation-search.service';
 import { CompanyService } from '../../services/company.service';
+import { SharePointConfigurationService } from '../../services/sharepoint-configuration.service';
 import { UserReadDto } from '../../models/user-read.dto';
 import { Role } from '../../models/role.enum';
 import { OperationReadDto, OperationStatusEnum, OperationTypeEnum } from '../../models/operation.model';
 import { PaginatedResultDto, OperationSearchDto } from '../../models/operation-search.dto';
 import { Company } from '../../models/company.model';
+import { SharePointConfigurationReadDto, IntegrationType } from '../../models/sharepoint-configuration.model';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -46,6 +48,7 @@ import { OperationViewComponent } from '../operation-view/operation-view.compone
 import { OperationSearchComponent } from '../operation-search/operations-filters-component';
 import { LaunchOperationModalComponent } from '../launch-operation-modal/launch-operation-modal.component';
 import { CompanyFormComponent } from '../company-form/company-form.component';
+import { SharePointConfigFormComponent } from '../sharepoint-config-form/sharepoint-config-form.component';
 
 @Component({
   selector: 'app-user-list',
@@ -112,9 +115,16 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoadingCompanies = false;
   companiesError: string | null = null;
 
+  // Propiedades para integraciones
+  integrations: IntegrationType[] = [];
+  isLoadingIntegrations = false;
+  integrationsError: string | null = null;
+  sharepointConfig: SharePointConfigurationReadDto | null = null;
+
   displayedColumns: string[] = ['username', 'email', 'role', 'companyName', 'createdAt', 'actions'];
   operationsDisplayedColumns: string[] = ['id', 'operationType', 'descripcionOperacion', 'status', 'user', 'minutesAlive', 'createdAt', 'actions'];
   companyDisplayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'createdAt', 'actions'];
+  integrationsDisplayedColumns: string[] = ['icon', 'name', 'description', 'status', 'actions'];
 
   private subscriptions: Subscription = new Subscription();
  
@@ -124,6 +134,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     private signatureService: SignatureService,
     private partyService: PartyService,
     private companyService: CompanyService,
+    private sharePointConfigService: SharePointConfigurationService,
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private router: Router,
@@ -346,12 +357,38 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
         this.subscriptions.add(
           this.companyService.deleteCompany(company.id).subscribe({
             next: () => {
-              this.snackBar.open('Empresa eliminada exitosamente', 'Cerrar', { duration: 3000 });
+              this.snackBar.open('Empresa eliminada exitosamente', 'Cerrar', { 
+                duration: 3000,
+                panelClass: ['success-snackbar']
+              });
               this.loadCompanies();
             },
             error: (error) => {
               console.error('[UserListComponent] Error al eliminar empresa:', error);
-              this.snackBar.open('Error al eliminar la empresa', 'Cerrar', { duration: 3000 });
+              
+              let errorMessage = 'Error al eliminar la empresa';
+              const errorCode = error.message;
+              
+              // Manejar códigos de error específicos
+              if(errorCode.includes('COMP_001')) {
+                  errorMessage = 'La empresa no existe o ya fue eliminada';
+              } else if(errorCode.includes('COMP_004')) {
+                  if (errorCode && errorCode.includes('users')) {
+                    errorMessage = 'No se puede eliminar la empresa porque tiene usuarios asociados. Elimine o reasigne los usuarios primero.';
+                  } else if (errorCode && errorCode.includes('operation')) {
+                    errorMessage = 'No se puede eliminar la empresa porque tiene operaciones registradas.';
+                  } else {
+                    errorMessage = errorCode || 'No se puede eliminar la empresa. Verifique que no tenga usuarios u operaciones asociadas.';
+                  }
+              }
+              else{
+                errorMessage = `Error al eliminar la empresa: ${errorCode}`;
+              }
+              
+              this.snackBar.open(errorMessage, 'Cerrar', { 
+                duration: 5000,
+                panelClass: ['error-snackbar']
+              });
             }
           })
         );
@@ -391,6 +428,9 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     if (index === 1 && (this.currentUser?.role === Role.Superusuario || this.currentUser?.role === Role.Administrador)) {
       // Si se cambia a la pestaña de operaciones, cargar las operaciones normales
       this.loadCompanyOperations();
+    } else if (index === 2 && this.currentUser?.role === Role.Superusuario) {
+      // Si se cambia a la pestaña de integraciones, cargar las integraciones
+      this.loadIntegrations();
     }
   }
 
@@ -741,6 +781,8 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
+        // Cambiar a la pestaña de operaciones y recargar
+        this.activeTabIndex = 1;
         this.loadCompanyOperations();
       }
     });
@@ -984,10 +1026,168 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
-        // Recargar operaciones si estamos en la pestaña de operaciones
-        if (this.activeTabIndex === 1) {
-          this.loadCompanyOperations();
+        // Cambiar a la pestaña de operaciones y recargar
+        this.activeTabIndex = 1;
+        this.loadCompanyOperations();
+      }
+    });
+  }
+
+  // ===================== MÉTODOS PARA INTEGRACIONES =====================
+
+  loadIntegrations(): void {
+    if (!this.currentUser?.companyId) {
+      this.integrationsError = 'No hay empresa asociada para cargar integraciones';
+      return;
+    }
+
+    this.isLoadingIntegrations = true;
+    this.integrationsError = null;
+
+    // Cargar configuración de SharePoint
+    this.sharePointConfigService.getSharePointConfiguration(this.currentUser.companyId).subscribe({
+      next: (config) => {
+        this.sharepointConfig = config;
+        this.buildIntegrationsList();
+        this.isLoadingIntegrations = false;
+      },
+      error: (err) => {
+        // Si es 404, no hay configuración (es normal)
+        if (err.message.includes('404') || err.message.includes('No hay configuración')) {
+          this.sharepointConfig = null;
+          this.buildIntegrationsList();
+        } else {
+          console.error('[UserListComponent] Error al cargar configuración de SharePoint:', err);
+          this.integrationsError = 'Error al cargar las integraciones';
         }
+        this.isLoadingIntegrations = false;
+      }
+    });
+  }
+
+  private buildIntegrationsList(): void {
+    // Verificar si SharePoint está configurado
+    const isSharePointConfigured = !!(
+      this.sharepointConfig?.tenantId &&
+      this.sharepointConfig?.clientId &&
+      this.sharepointConfig?.siteId &&
+      this.sharepointConfig?.folder
+    );
+
+    this.integrations = [
+      {
+        id: 'sharepoint',
+        name: 'SharePoint',
+        description: 'Almacenamiento automático de documentos firmados en SharePoint',
+        icon: 'cloud_upload',
+        isConfigured: isSharePointConfigured
+      }
+      // Aquí se pueden agregar más integraciones en el futuro
+    ];
+  }
+
+  openSharePointConfigDialog(integration: IntegrationType): void {
+    if (!this.currentUser?.companyId) {
+      this.snackBar.open('No hay empresa asociada', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(SharePointConfigFormComponent, {
+      width: '700px',
+      disableClose: true,
+      data: {
+        config: integration.isConfigured ? this.sharepointConfig : null,
+        companyId: this.currentUser.companyId
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        if (result.isEdit) {
+          // Actualizar configuración existente
+          this.updateSharePointConfiguration(result.data);
+        } else {
+          // Crear nueva configuración
+          this.createSharePointConfiguration(result.data);
+        }
+      }
+    });
+  }
+
+  private createSharePointConfiguration(configData: any): void {
+    if (!this.currentUser?.companyId) return;
+
+    this.sharePointConfigService.createSharePointConfiguration(this.currentUser.companyId, configData).subscribe({
+      next: (config) => {
+        this.snackBar.open('Configuración de SharePoint creada exitosamente', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        this.loadIntegrations();
+      },
+      error: (err) => {
+        console.error('[UserListComponent] Error al crear configuración de SharePoint:', err);
+        this.snackBar.open(`Error al crear configuración: ${err.message}`, 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  private updateSharePointConfiguration(configData: any): void {
+    if (!this.currentUser?.companyId) return;
+
+    this.sharePointConfigService.updateSharePointConfiguration(this.currentUser.companyId, configData).subscribe({
+      next: () => {
+        this.snackBar.open('Configuración de SharePoint actualizada exitosamente', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        this.loadIntegrations();
+      },
+      error: (err) => {
+        console.error('[UserListComponent] Error al actualizar configuración de SharePoint:', err);
+        this.snackBar.open(`Error al actualizar configuración: ${err.message}`, 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  deleteSharePointConfiguration(integration: IntegrationType): void {
+    if (!this.currentUser?.companyId) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Confirmar eliminación',
+        message: `¿Está seguro de que desea eliminar la configuración de ${integration.name}? Los documentos ya almacenados no se eliminarán.`
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && this.currentUser?.companyId) {
+        this.sharePointConfigService.deleteSharePointConfiguration(this.currentUser.companyId).subscribe({
+          next: () => {
+            this.snackBar.open('Configuración de SharePoint eliminada exitosamente', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            this.loadIntegrations();
+          },
+          error: (err) => {
+            console.error('[UserListComponent] Error al eliminar configuración de SharePoint:', err);
+            this.snackBar.open(`Error al eliminar configuración: ${err.message}`, 'Cerrar', {
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            });
+          }
+        });
       }
     });
   }

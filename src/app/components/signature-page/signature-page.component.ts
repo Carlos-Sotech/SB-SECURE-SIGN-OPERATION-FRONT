@@ -647,6 +647,10 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
         let origin = sessionStorage.getItem('signatureOrigin');
 
         if (origin === 'user-list' || origin === 'operation-list') {
+          // Si volvemos a user-list, establecer flag para mostrar pestaña de operaciones
+          if (origin === 'user-list') {
+            sessionStorage.setItem('showOperacionesTab', 'true');
+          }
           this.router.navigate([origin]).then(() => {
           console.log('🔍 Navigation successful, opening modal in 500ms...');
           setTimeout(() => {
@@ -673,11 +677,23 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
         console.error('🔍 Modal data was:', modalData);
         this.snackBar.open('Error al procesar datos del modal', 'Cerrar', { duration: 3000 });
         // Navegar de vuelta sin abrir modal
-        this.router.navigate(['/operation-list']);
+        let origin = sessionStorage.getItem('signatureOrigin');
+        if (origin === 'user-list') {
+          sessionStorage.setItem('showOperacionesTab', 'true');
+          this.router.navigate(['/user-list']);
+        } else {
+          this.router.navigate(['/operation-list']);
+        }
       }
     } else {
       console.log('🔍 No modal data found, navigating directly to operation-list');
-      this.router.navigate(['/operation-list']);
+      let origin = sessionStorage.getItem('signatureOrigin');
+      if (origin === 'user-list') {
+        sessionStorage.setItem('showOperacionesTab', 'true');
+        this.router.navigate(['/user-list']);
+      } else {
+        this.router.navigate(['/operation-list']);
+      }
     }
   }
 
