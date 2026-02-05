@@ -218,16 +218,16 @@ export class LoginComponent implements OnInit, OnDestroy {
     // Usar window.location.href para navegación forzada
     switch (user.role) {
       case Role.Administrador:
-        console.log('🔍 [LOGIN] Navegación directa a /user-list para Administrador');
-        window.location.href = '/user-list';
+        console.log('🔍 [LOGIN] Navegación directa a /home para Administrador');
+        window.location.href = '/home';
         break;
       case Role.Superusuario:
-        console.log('🔍 [LOGIN] Navegación directa a /user-list para Superusuario');
-        window.location.href = '/user-list';
+        console.log('🔍 [LOGIN] Navegación directa a /home para Superusuario');
+        window.location.href = '/home';
         break;
       case Role.Usuario:
-        console.log('🔍 [LOGIN] Navegación directa a /operation-list para Usuario');
-        window.location.href = '/operation-list';
+        console.log('🔍 [LOGIN] Navegación directa a /home para Usuario');
+        window.location.href = '/home';
         break;
       default:
         console.error('🔍 [LOGIN] Rol no reconocido:', user.role);
@@ -245,16 +245,16 @@ export class LoginComponent implements OnInit, OnDestroy {
     
     switch (user.role) {
       case Role.Administrador:
-        console.log('🔍 [LOGIN] Navegando a /user-list para Administrador');
-        this.router.navigate(['/user-list']);
+        console.log('🔍 [LOGIN] Navegando a /home para Administrador');
+        this.router.navigate(['/home']);
         break;
       case Role.Superusuario:
-        console.log('🔍 [LOGIN] Navegando a /user-list para Superusuario');
-        this.router.navigate(['/user-list']);
+        console.log('🔍 [LOGIN] Navegando a /home para Superusuario');
+        this.router.navigate(['/home']);
         break;
       case Role.Usuario:
-        console.log('🔍 [LOGIN] Navegando a /operation-list para Usuario');
-        this.router.navigate(['/operation-list']);
+        console.log('🔍 [LOGIN] Navegando a /home para Usuario');
+        this.router.navigate(['/home']);
         break;
       default:
         console.error('🔍 [LOGIN] Rol no reconocido:', user.role);

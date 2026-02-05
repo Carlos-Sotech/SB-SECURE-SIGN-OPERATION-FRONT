@@ -68,7 +68,8 @@ export class CompanyFormComponent implements OnInit {
       stateOrProvince: [this.data?.stateOrProvince || null, [Validators.maxLength(100)]],
       phoneNumber: [this.data?.phoneNumber || null, [Validators.maxLength(20)]],
       email: [this.data?.email || null, [Validators.email, Validators.maxLength(150)]],
-      numberOfAgents: [this.data?.numberOfAgents ?? 0, [Validators.required, Validators.min(0)]]
+      numberOfAgents: [this.data?.numberOfAgents ?? 0, [Validators.required, Validators.min(0)]],
+      maxMonthlyOperations: [this.data?.maxMonthlyOperations ?? 0, [Validators.required, Validators.min(0)]]
     });
     console.log('CompanyFormComponent ngOnInit: Valores iniciales del formulario:', this.companyForm.value);
     if (this.isEditMode && this.data?.name) {

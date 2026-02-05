@@ -385,7 +385,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
           this.onRoleChange(); // Re-evaluar validadores después del reset
 
          if(this.isPrivilegedRegistering && this.loggedInUser?.role === Role.Superusuario || this.loggedInUser?.role === Role.Administrador) {
-          this.router.navigate(['/user-list']);
+          this.router.navigate(['/home']);
          }
         },
         error: (err) => {
@@ -400,6 +400,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   onCancel(): void {
     // Navegar de vuelta a la lista de usuarios
-    this.router.navigate(['/user-list']);
+    this.router.navigate(['/home']);
   }
 }

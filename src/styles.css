@@ -237,6 +237,24 @@ body, * {
   color: white !important;
 }
 
+.session-expired-snackbar {
+  background-color: #d32f2f !important;
+  color: white !important;
+}
+
+.session-expired-snackbar .mdc-snackbar__surface {
+  background-color: #d32f2f !important;
+}
+
+.session-expired-snackbar .mdc-snackbar__label {
+  color: white !important;
+  font-weight: 500;
+}
+
+.session-expired-snackbar .mat-mdc-button {
+  color: white !important;
+}
+
 /* Ajustar el ancho del touch target para iconos */
 .mat-mdc-icon-button .mat-mdc-button-touch-target {
   width: auto !important;

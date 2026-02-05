@@ -646,9 +646,9 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
         let origin = sessionStorage.getItem('signatureOrigin');
 
-        if (origin === 'user-list' || origin === 'operation-list') {
-          // Si volvemos a user-list, establecer flag para mostrar pestaña de operaciones
-          if (origin === 'user-list') {
+        if (origin === 'home' || origin === 'operation-list') {
+          // Si volvemos a home, establecer flag para mostrar pestaña de operaciones
+          if (origin === 'home') {
             sessionStorage.setItem('showOperacionesTab', 'true');
           }
           this.router.navigate([origin]).then(() => {
@@ -678,9 +678,9 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
         this.snackBar.open('Error al procesar datos del modal', 'Cerrar', { duration: 3000 });
         // Navegar de vuelta sin abrir modal
         let origin = sessionStorage.getItem('signatureOrigin');
-        if (origin === 'user-list') {
+        if (origin === 'home') {
           sessionStorage.setItem('showOperacionesTab', 'true');
-          this.router.navigate(['/user-list']);
+          this.router.navigate(['/home']);
         } else {
           this.router.navigate(['/operation-list']);
         }
@@ -688,9 +688,9 @@ export class SignaturePageComponent implements OnInit, AfterViewInit, OnDestroy 
     } else {
       console.log('🔍 No modal data found, navigating directly to operation-list');
       let origin = sessionStorage.getItem('signatureOrigin');
-      if (origin === 'user-list') {
+      if (origin === 'home') {
         sessionStorage.setItem('showOperacionesTab', 'true');
-        this.router.navigate(['/user-list']);
+        this.router.navigate(['/home']);
       } else {
         this.router.navigate(['/operation-list']);
       }

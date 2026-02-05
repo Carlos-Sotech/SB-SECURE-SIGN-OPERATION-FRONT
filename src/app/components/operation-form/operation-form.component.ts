@@ -112,6 +112,32 @@ export class OperationFormComponent implements OnInit, OnDestroy {
         this.currentPage = this.totalPages;
       }
     }
+
+    // Touch event handlers for tablet/mobile support
+    onTouchFirstPage(event: TouchEvent): void {
+      event.preventDefault();
+      event.stopPropagation();
+      this.goToFirstPage();
+    }
+
+    onTouchPreviousPage(event: TouchEvent): void {
+      event.preventDefault();
+      event.stopPropagation();
+      this.goToPreviousPage();
+    }
+
+    onTouchNextPage(event: TouchEvent): void {
+      event.preventDefault();
+      event.stopPropagation();
+      this.goToNextPage();
+    }
+
+    onTouchLastPage(event: TouchEvent): void {
+      event.preventDefault();
+      event.stopPropagation();
+      this.goToLastPage();
+    }
+
   // Inyección de dependencias con inject()
   private fb = inject(FormBuilder);
   private operationService = inject(OperationService);
@@ -1037,7 +1063,7 @@ export class OperationFormComponent implements OnInit, OnDestroy {
 
   onCancel(): void {
     // Si el origen es user-list, marca el tab de operaciones para restaurar
-    if (this.signatureOrigin === 'user-list') {
+    if (this.signatureOrigin === 'home') {
       sessionStorage.setItem('showOperacionesTab', 'true');
     }
     this.dialogRef.close();
@@ -1404,8 +1430,8 @@ export class OperationFormComponent implements OnInit, OnDestroy {
         }
       };
 
-      if (currentUrl.includes('/user-list')) {
-        origin = 'user-list';
+      if (currentUrl.includes('/home')) {
+        origin = 'home';
       } else if (currentUrl.includes('/operation-list')) {
         origin = 'operation-list';
       }

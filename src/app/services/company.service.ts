@@ -6,7 +6,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment'; // Ajusta la ruta
 import { Company } from '../models/company.model';         // Ajusta la ruta
-import { CompanyReadDto } from '../models/company-read.dto';
+import { CompanyReadDto, CompanyOperationsUsageDto } from '../models/company-read.dto';
 
 export interface CompanyCreationPayload {
   name: string;
@@ -43,6 +43,16 @@ export class CompanyService { // <--- ASEGÚRATE DE QUE 'export' ESTÉ AQUÍ
 
   deleteCompany(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getOperationsUsage(companyId: number): Observable<CompanyOperationsUsageDto> {
+    return this.http.get<CompanyOperationsUsageDto>(`${this.apiUrl}/${companyId}/operations-usage`)
+      .pipe(catchError(this.handleError));
+  }
+
+  canCreateOperation(companyId: number): Observable<boolean> {
+    return this.http.get<boolean>(`${this.apiUrl}/${companyId}/can-create-operation`)
       .pipe(catchError(this.handleError));
   }
 

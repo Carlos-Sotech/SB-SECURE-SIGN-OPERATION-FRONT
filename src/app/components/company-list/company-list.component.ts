@@ -54,8 +54,8 @@ export class CompanyListComponent implements OnInit, OnDestroy {
   public Role = Role;
 
   // --- MODIFICACIÓN AQUÍ ---
-  // Añadir 'numberOfAgents' al array de columnas a mostrar.
-  displayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'createdAt', 'actions'];
+  // Añadir 'numberOfAgents' y 'operationsUsage' al array de columnas a mostrar.
+  displayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'operationsUsage', 'createdAt', 'actions'];
   // --- FIN DE LA MODIFICACIÓN ---
 
   private subscriptions = new Subscription();
@@ -85,7 +85,16 @@ export class CompanyListComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.companyService.getCompanies().subscribe({
         next: data => {
-          this.companies = data;
+          console.log('Datos de empresas recibidos:', data);
+          // Asegurar que los campos de operaciones existen con valores por defecto
+          this.companies = data.map(company => ({
+            ...company,
+            maxMonthlyOperations: company.maxMonthlyOperations ?? 0,
+            currentMonthOperationsCount: company.currentMonthOperationsCount ?? 0,
+            hasUnlimitedOperations: company.maxMonthlyOperations === 0 || company.hasUnlimitedOperations,
+            hasReachedMonthlyLimit: company.hasReachedMonthlyLimit ?? false
+          }));
+          console.log('Empresas procesadas:', this.companies);
           this.isLoadingCompanies = false;
         },
         error: err => {
@@ -188,7 +197,7 @@ export class CompanyListComponent implements OnInit, OnDestroy {
 
   navigateToUsers(): void {
     this.drawer.close();
-    this.router.navigate(['/user-list']);
+    this.router.navigate(['/home']);
   }
 
   logout(): void {

@@ -8,18 +8,39 @@ export class AuthTokenInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {} // AuthService sí puede tener providedIn: 'root'
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    console.log('[AuthTokenInterceptor] Interceptando petición (Standalone setup):', request.url); // LOG INICIAL
     const authToken = this.authService.getAuthToken();
     const apiBaseUrl = this.authService.getApiBaseUrl();
 
-    if (authToken && request.url.startsWith(apiBaseUrl)) {
+    // Debug detallado para investigar 401s tras flujos de firma
+    const tokenPreview = authToken ? `${authToken.substring(0, 20)}...` : 'null';
+    const startsWithBase = request.url.startsWith(apiBaseUrl);
+    const hasAuthHeader = request.headers.has('Authorization');
+
+    console.log('[AuthTokenInterceptor] Interceptando petición:', {
+      url: request.url,
+      method: request.method,
+      apiBaseUrl,
+      startsWithBase,
+      authToken: tokenPreview,
+      requestHadAuthorizationHeader: hasAuthHeader
+    });
+
+    if (authToken && startsWithBase && !hasAuthHeader) {
       const authReq = request.clone({
         headers: request.headers.set('Authorization', `Bearer ${authToken}`)
       });
-      console.log('[AuthTokenInterceptor] Token añadido para:', request.url);
+      console.log('[AuthTokenInterceptor] Token añadido a la petición:', { url: request.url, authToken: tokenPreview });
       return next.handle(authReq);
     }
-    console.log('[AuthTokenInterceptor] Token NO añadido para:', request.url);
+
+    if (!authToken) {
+      console.log('[AuthTokenInterceptor] No hay token disponible en localStorage');
+    } else if (!startsWithBase) {
+      console.log('[AuthTokenInterceptor] La URL no coincide con apiBaseUrl, no se añade token');
+    } else if (hasAuthHeader) {
+      console.log('[AuthTokenInterceptor] La petición ya incluye cabecera Authorization, no la sobrescribo');
+    }
+
     return next.handle(request);
   }
 }

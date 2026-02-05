@@ -160,6 +160,31 @@ onWindowScroll(event: WheelEvent) {
     }
   }
 
+  // Touch event handlers for tablet/mobile support
+  onTouchFirstPage(event: TouchEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.goToFirstPage();
+  }
+
+  onTouchPreviousPage(event: TouchEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.goToPreviousPage();
+  }
+
+  onTouchNextPage(event: TouchEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.goToNextPage();
+  }
+
+  onTouchLastPage(event: TouchEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.goToLastPage();
+  }
+
   onPagesLoaded(event: any): void {
     this.totalPages = event?.pagesCount || 1;
     if (this.currentPage > this.totalPages) {

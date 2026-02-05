@@ -3,7 +3,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ElementRef, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { filter } from 'rxjs/operators'; // Importar filter
 
 // Angular Material
@@ -20,8 +20,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatPaginatorModule, PageEvent, MatPaginatorIntl } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 // Servicios y Modelos
 import { AuthService } from '../../services/auth.service';
@@ -37,6 +39,7 @@ import { OperationReadDto, OperationStatusEnum, OperationTypeEnum } from '../../
 import { PaginatedResultDto, OperationSearchDto } from '../../models/operation-search.dto';
 import { Company } from '../../models/company.model';
 import { SharePointConfigurationReadDto, IntegrationType } from '../../models/sharepoint-configuration.model';
+import { CompanyOperationsUsageDto } from '../../models/company-read.dto';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -63,7 +66,10 @@ import { SharePointConfigFormComponent } from '../sharepoint-config-form/sharepo
     MatSidenavModule, MatToolbarModule, MatIconModule, MatButtonModule,
     MatListModule, MatDividerModule, MatCardModule, MatProgressSpinnerModule,
     MatTableModule, MatTooltipModule, MatSnackBarModule, MatDialogModule, MatChipsModule, MatTabsModule,
-    MatPaginatorModule
+    // Slide toggle for auto-refresh
+    // Note: MatSlideToggleModule added below
+      MatPaginatorModule, MatProgressBarModule,
+      MatSlideToggleModule
   ],
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.css']
@@ -103,6 +109,11 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   operationsError: string | null = null;
   operationsPagination: PaginatedResultDto<OperationReadDto> | null = null;
 
+  // Auto-refresh for operations (10s)
+  operationsAutoRefreshEnabled = true;
+  private autoRefreshSub: Subscription | null = null;
+  private readonly OPERATIONS_AUTO_REFRESH_MS = 10000;
+
   // Variable para controlar qué pestaña está activa (0 = Usuarios, 1 = Operaciones)
   activeTabIndex = 0;
 
@@ -120,10 +131,14 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoadingIntegrations = false;
   integrationsError: string | null = null;
   sharepointConfig: SharePointConfigurationReadDto | null = null;
+  
+  // Propiedades para consumo de operaciones
+  operationsUsage: CompanyOperationsUsageDto | null = null;
+  isLoadingOperationsUsage = false;
 
   displayedColumns: string[] = ['username', 'email', 'role', 'companyName', 'createdAt', 'actions'];
   operationsDisplayedColumns: string[] = ['id', 'operationType', 'descripcionOperacion', 'status', 'user', 'minutesAlive', 'createdAt', 'actions'];
-  companyDisplayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'createdAt', 'actions'];
+  companyDisplayedColumns: string[] = ['id', 'name', 'numberOfAgents', 'operationsUsage', 'createdAt', 'actions'];
   integrationsDisplayedColumns: string[] = ['icon', 'name', 'description', 'status', 'actions'];
 
   private subscriptions: Subscription = new Subscription();
@@ -175,11 +190,14 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
       this.authService.currentUser.subscribe(user => {
         this.currentUser = user;
         
-        // Si es usuario normal, redirigir a operation-list
+        // Si es usuario normal, mostrar la página de usuarios y cargar solo sus operaciones
         if (user && user.role === Role.Usuario) {
-          console.log('[UserListComponent] Usuario normal detectado, redirigiendo a operation-list');
-          this.router.navigate(['/operation-list']);
-          return;
+          console.log('[UserListComponent] Usuario normal detectado, mostrando user-list con sus operaciones');
+          this.loadUserOperations();
+          // Iniciar auto-refresh por defecto
+          if (this.operationsAutoRefreshEnabled) {
+            this.startOperationsAutoRefresh();
+          }
         }
         
         // Si el usuario cambia (ej. de null a logueado), recargar y refiltrar usuarios.
@@ -189,6 +207,10 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
         // Si es superusuario o administrador, cargar las operaciones normales de su empresa
         if ((user?.role === Role.Superusuario || user?.role === Role.Administrador) && user.companyId) {
           this.loadCompanyOperations();
+          // Iniciar auto-refresh por defecto
+          if (this.operationsAutoRefreshEnabled) {
+            this.startOperationsAutoRefresh();
+          }
         }
 
         // Si es administrador, cargar empresas
@@ -202,6 +224,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    this.stopOperationsAutoRefresh();
   }
 
   loadUsers(): void {
@@ -290,7 +313,16 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.add(
       this.companyService.getCompanies().subscribe({
         next: (companies) => {
-          this.companies = companies;
+          console.log('Datos de empresas recibidos en user-list:', companies);
+          // Asegurar que los campos de operaciones existen con valores por defecto
+          this.companies = companies.map(company => ({
+            ...company,
+            maxMonthlyOperations: company.maxMonthlyOperations ?? 0,
+            currentMonthOperationsCount: company.currentMonthOperationsCount ?? 0,
+            hasUnlimitedOperations: company.maxMonthlyOperations === 0 || company.hasUnlimitedOperations,
+            hasReachedMonthlyLimit: company.hasReachedMonthlyLimit ?? false
+          }));
+          console.log('Empresas procesadas en user-list:', this.companies);
           this.totalCompanies = companies.length;
           this.updateDisplayedCompanies();
           this.isLoadingCompanies = false;
@@ -403,10 +435,10 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   navigateToOperations(): void {
-    if (this.currentUser?.role === Role.Superusuario || this.currentUser?.role === Role.Administrador) {
-      // Para superusuario o administrador, cambiar a la pestaña de operaciones
+    if (this.currentUser?.role === Role.Superusuario || this.currentUser?.role === Role.Administrador || this.currentUser?.role === Role.Usuario) {
+      // Para cualquier usuario con rol válido, cambiar a la pestaña de operaciones
       this.activeTabIndex = 1;
-      this.loadCompanyOperations(); // Cargar operaciones normales
+      this.reloadOperationsForCurrentRole(); // Cargar operaciones según rol
     } else {
       this.router.navigate(['/operation-list']);
     }
@@ -425,9 +457,9 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onTabChange(index: number): void {
     this.activeTabIndex = index;
-    if (index === 1 && (this.currentUser?.role === Role.Superusuario || this.currentUser?.role === Role.Administrador)) {
-      // Si se cambia a la pestaña de operaciones, cargar las operaciones normales
-      this.loadCompanyOperations();
+    if (index === 1) {
+      // Si se cambia a la pestaña de operaciones, cargar según rol
+      this.reloadOperationsForCurrentRole();
     } else if (index === 2 && this.currentUser?.role === Role.Superusuario) {
       // Si se cambia a la pestaña de integraciones, cargar las integraciones
       this.loadIntegrations();
@@ -445,7 +477,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isSearching) {
       this.loadSearchResults();
     } else {
-      this.loadCompanyOperations();
+      this.reloadOperationsForCurrentRole();
     }
   }
 
@@ -455,7 +487,10 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.add(
       this.operationService.getUserOperationsCountForCompanyChange(user.id).subscribe({
         next: (operationsCount) => {
-          const canEditCompany = operationsCount === 0;
+          // Un superusuario NO puede editar la empresa (solo admin puede)
+          // Además, si el usuario tiene operaciones tampoco se puede cambiar
+          const isSuperuser = this.currentUser?.role === Role.Superusuario;
+          const canEditCompany = !isSuperuser && operationsCount === 0;
           
           // Abrir el formulario de edición
           const editDialog = this.dialog.open(UserEditFormComponent, {
@@ -610,6 +645,70 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
+  // Método para cargar operaciones del usuario actual (para usuarios normales)
+  loadUserOperations(): void {
+    if (!this.currentUser?.id) {
+      this.operationsError = 'No se pudo identificar al usuario para cargar operaciones.';
+      return;
+    }
+
+    this.isLoadingOperations = true;
+    this.operationsError = null;
+    
+    // Reset search state
+    this.searchResults = [];
+    this.isSearching = false;
+
+    this.subscriptions.add(
+      this.operationService.getOperationsByUser(
+        this.currentUser.id, 
+        this.currentSearch.page, 
+        this.currentSearch.pageSize
+      ).subscribe({
+        next: (response) => {
+          this.companyOperations = response.items;
+          this.operationsPagination = response;
+          this.isLoadingOperations = false;
+          console.log('User operations loaded:', this.companyOperations);
+          
+          // También cargar las operaciones pendientes específicas del usuario
+          this.loadPendingOperationsByUser();
+        },
+        error: (err) => {
+          console.error('Error al cargar operaciones del usuario:', err);
+          this.operationsError = err.message || 'No se pudieron cargar las operaciones del usuario.';
+          this.isLoadingOperations = false;
+        }
+      })
+    );
+  }
+
+  // Método para cargar operaciones pendientes del usuario actual
+  loadPendingOperationsByUser(): void {
+    if (!this.currentUser?.id) {
+      console.log('No hay usuario válido para cargar operaciones pendientes');
+      return;
+    }
+
+    this.subscriptions.add(
+      this.operationService.getPendingOperationsByUser(this.currentUser.id).subscribe({
+        next: (pendingOperations) => {
+          if (pendingOperations && pendingOperations.length > 0) {
+            this.pendingOperations = pendingOperations;
+            console.log('Pending operations by user loaded:', pendingOperations);
+          } else {
+            console.log('No hay operaciones pendientes para el usuario');
+            this.pendingOperations = [];
+          }
+        },
+        error: (err) => {
+          console.error('Error al cargar operaciones pendientes del usuario:', err);
+          this.pendingOperations = [];
+        }
+      })
+    );
+  }
+
   // Métodos auxiliares para operaciones
   getOperationTypeColor(operationType: string): string {
     switch (operationType) {
@@ -651,10 +750,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   // Get pending operations from display operations
   getDisplayPendingOperations(): OperationReadDto[] {
     const operations = this.getDisplayOperations();
-    const filteredOperations = this.currentSearch.showExpired ? 
-      operations : 
-      operations.filter(op => op.status !== 'Caducada');
-    const pendingFromCurrentPage = filteredOperations.filter(op => op.status === 'Pendiente');
+    const pendingFromCurrentPage = operations.filter(op => op.status === 'Pendiente');
     
     // Si no hay operaciones pendientes en la página actual, usar las pendientes específicas
     if (pendingFromCurrentPage.length === 0 && !this.isSearching && this.pendingOperations.length > 0) {
@@ -667,10 +763,41 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   // Get non-pending operations from display operations
   getDisplayNonPendingOperations(): OperationReadDto[] {
     const operations = this.getDisplayOperations();
-    const filteredOperations = this.currentSearch.showExpired ? 
-      operations : 
-      operations.filter(op => op.status !== 'Caducada');
-    return filteredOperations.filter(op => op.status !== 'Pendiente');
+    return operations.filter(op => op.status !== 'Pendiente');
+  }
+
+  toggleOperationsAutoRefresh(enabled: boolean): void {
+    this.operationsAutoRefreshEnabled = enabled;
+    if (enabled) {
+      // Ejecutar inmediatamente y luego cada intervalo
+      this.reloadOperationsForCurrentRole();
+      this.startOperationsAutoRefresh();
+    } else {
+      this.stopOperationsAutoRefresh();
+    }
+  }
+
+  // Método auxiliar para recargar operaciones según el rol
+  private reloadOperationsForCurrentRole(): void {
+    if (this.currentUser?.role === Role.Usuario) {
+      this.loadUserOperations();
+    } else {
+      this.loadCompanyOperations();
+    }
+  }
+
+  private startOperationsAutoRefresh(): void {
+    this.stopOperationsAutoRefresh();
+    this.autoRefreshSub = interval(this.OPERATIONS_AUTO_REFRESH_MS).subscribe(() => {
+      this.reloadOperationsForCurrentRole();
+    });
+  }
+
+  private stopOperationsAutoRefresh(): void {
+    if (this.autoRefreshSub) {
+      this.autoRefreshSub.unsubscribe();
+      this.autoRefreshSub = null;
+    }
   }
 
   // Método para cargar operaciones pendientes específicas por empresa
@@ -713,11 +840,11 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isSearching) {
       this.loadSearchResults();
     } else {
-      // Clear search state and reload company operations
+      // Clear search state and reload operations
       this.searchResults = [];
       this.isSearching = false;
-      console.log('🔍 Clearing search, reloading company operations');
-      this.loadCompanyOperations();
+      console.log('🔍 Clearing search, reloading operations');
+      this.reloadOperationsForCurrentRole();
     }
   }
 
@@ -783,7 +910,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
         });
         // Cambiar a la pestaña de operaciones y recargar
         this.activeTabIndex = 1;
-        this.loadCompanyOperations();
+        this.reloadOperationsForCurrentRole();
       }
     });
   }
@@ -810,7 +937,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
               duration: 3000,
               panelClass: ['success-snackbar']
             });
-            this.loadCompanyOperations();
+            this.reloadOperationsForCurrentRole();
           },
           error: (err) => {
             console.error('Error al eliminar operación:', err);
@@ -883,7 +1010,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
                   });
 
                   // Recargar operaciones
-                  this.loadCompanyOperations();
+                  this.reloadOperationsForCurrentRole();
                 },
                 error: (err) => {
                   console.error('Error al lanzar operación:', err);
@@ -914,6 +1041,23 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('🔍 Current workflow URL:', operation.workFlowUrl);
     console.log('🔍 Operation status:', operation.status);
     
+    // Verificar que la operación NO esté pendiente ni completada
+    if (operation.status === 'Pendiente') {
+      this.snackBar.open('Esta operación está pendiente. Usa el botón "Lanzar Operación" en su lugar.', 'Cerrar', {
+        duration: 4000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+    
+    if (operation.status === 'Completada') {
+      this.snackBar.open('No se pueden relanzar operaciones completadas.', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+    
     // Para operaciones remotas, necesitamos relanzar para obtener un nuevo externalId
     if (operation.operationType === OperationTypeEnum.REMOTA) {
       console.log('🔍 Relaunching remote operation...');
@@ -941,7 +1085,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
           });
 
           // Recargar operaciones para obtener la nueva workFlowUrl
-          this.loadCompanyOperations();
+          this.reloadOperationsForCurrentRole();
         },
         error: (err) => {
           console.error('🔍 Error al relanzar operación:', err);
@@ -987,7 +1131,7 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
             });
 
             // Recargar operaciones para obtener la nueva workFlowUrl
-            this.loadCompanyOperations();
+            this.reloadOperationsForCurrentRole();
           },
           error: (err) => {
             console.error('🔍 Error al relanzar operación local:', err);
@@ -1012,23 +1156,52 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   openCreateOperationDialog(): void {
-    const dialogRef = this.dialog.open(OperationFormComponent, {
-      width: '100vw',
-      height: '100vh',
-      maxWidth: '100vw',
-      maxHeight: '100vh',
-      data: { operation: null, isEdit: false }
-    });
+    // Validar si la empresa puede crear operaciones
+    if (!this.currentUser?.companyId) {
+      this.snackBar.open('No se puede determinar la empresa del usuario', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'created' || result === 'saved') {
-        this.snackBar.open('Operación creada exitosamente', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
+    this.companyService.canCreateOperation(this.currentUser.companyId).subscribe({
+      next: (response: any) => {
+        if (!response.canCreate) {
+          this.snackBar.open('⚠️ Se ha alcanzado el límite de operaciones mensuales para su empresa', 'Cerrar', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+          return;
+        }
+
+        // Si puede crear, abrir el diálogo
+        const dialogRef = this.dialog.open(OperationFormComponent, {
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          data: { operation: null, isEdit: false }
         });
-        // Cambiar a la pestaña de operaciones y recargar
-        this.activeTabIndex = 1;
-        this.loadCompanyOperations();
+
+        dialogRef.afterClosed().subscribe(result => {
+          if (result === 'created' || result === 'saved') {
+            this.snackBar.open('Operación creada exitosamente', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            // Cambiar a la pestaña de operaciones y recargar
+            this.activeTabIndex = 1;
+            this.reloadOperationsForCurrentRole();
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al verificar límite de operaciones:', error);
+        this.snackBar.open('Error al verificar límite de operaciones. Intente nuevamente.', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -1043,6 +1216,9 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.isLoadingIntegrations = true;
     this.integrationsError = null;
+    
+    // Cargar consumo de operaciones
+    this.loadOperationsUsage();
 
     // Cargar configuración de SharePoint
     this.sharePointConfigService.getSharePointConfiguration(this.currentUser.companyId).subscribe({
@@ -1084,6 +1260,27 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       // Aquí se pueden agregar más integraciones en el futuro
     ];
+  }
+
+  loadOperationsUsage(): void {
+    if (!this.currentUser?.companyId) {
+      return;
+    }
+    
+    this.isLoadingOperationsUsage = true;
+    
+    this.companyService.getOperationsUsage(this.currentUser.companyId).subscribe({
+      next: (usage) => {
+        this.operationsUsage = usage;
+        this.isLoadingOperationsUsage = false;
+        console.log('[UserListComponent] Operations usage loaded:', usage);
+      },
+      error: (err) => {
+        console.error('[UserListComponent] Error loading operations usage:', err);
+        this.isLoadingOperationsUsage = false;
+        // No mostrar error al usuario, solo en consola
+      }
+    });
   }
 
   openSharePointConfigDialog(integration: IntegrationType): void {

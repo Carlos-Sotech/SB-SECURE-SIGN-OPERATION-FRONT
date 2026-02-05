@@ -76,11 +76,11 @@
                         <th mat-header-cell *matHeaderCellDef> Acciones </th>
                         <td mat-cell *matCellDef="let user">
                           <button mat-icon-button color="primary" (click)="editUser(user)" matTooltip="Editar Usuario"
-                                  *ngIf="currentUser && currentUser.role === Role.Administrador">
+                                  *ngIf="currentUser && (currentUser.role === Role.Administrador || currentUser.role === Role.Superusuario)">
                             <mat-icon>edit</mat-icon>
                           </button>
             <button mat-icon-button color="warn" (click)="deleteUser(user)" matTooltip="Eliminar Usuario"
-                    *ngIf="currentUser && currentUser.id !== user.id && currentUser.role === Role.Administrador">
+                    *ngIf="currentUser && currentUser.id !== user.id && (currentUser.role === Role.Administrador || currentUser.role === Role.Superusuario)">
               <mat-icon>delete</mat-icon>
             </button>
                         </td>
@@ -101,7 +101,7 @@
           </mat-tab>
 
           <!-- Pestaña de Operaciones -->
-          <mat-tab label="Operaciones de la Empresa" *ngIf="currentUser?.role === Role.Superusuario || currentUser?.role === Role.Usuario">
+          <mat-tab label="Operaciones" *ngIf="currentUser?.role === Role.Superusuario || currentUser?.role === Role.Usuario">
             <app-operation-search 
               (searchChanged)="onSearchChanged($event)"
               *ngIf="currentUser">
@@ -109,18 +109,20 @@
             
             <mat-card class="operations-card">
               <mat-card-header>
-                <mat-card-title>
-                  {{ isSearching ? 'Resultados de Búsqueda' : 'Operaciones de ' + currentUser?.companyName }}
-                  <span *ngIf="isSearching">({{ companyOperations.length }})</span>
-                </mat-card-title>
+                <!-- Title removed as requested -->
                 <button mat-flat-button color="accent" class="create-operation-button"
                         (click)="openCreateOperationDialog()"
                         style="margin-right: 8px;">
                   <mat-icon>add_task</mat-icon> Nueva Operación
                 </button>
-                <button mat-icon-button (click)="loadCompanyOperations()" matTooltip="Recargar operaciones">
-                  <mat-icon>refresh</mat-icon>
-                </button>
+                <!-- Refresh button removed as requested -->
+                <mat-slide-toggle
+                  [checked]="operationsAutoRefreshEnabled"
+                  (change)="toggleOperationsAutoRefresh($event.checked)"
+                  matTooltip="Auto-refresh cada 10s"
+                  style="margin-left:12px">
+                  Auto-refresh
+                </mat-slide-toggle>
               </mat-card-header>
               <mat-card-content>
                 <!-- Spinner de carga -->
@@ -228,7 +230,7 @@
                           <mat-icon>edit</mat-icon>
                         </button>
                         <button 
-                          *ngIf="operation.status !== 'Pendiente'"
+                          *ngIf="operation.status !== 'Pendiente' && operation.status !== 'Completada'"
                           mat-icon-button 
                           color="primary" 
                           (click)="relaunchOperation(operation)" 
@@ -324,7 +326,7 @@
                           <mat-icon>edit</mat-icon>
                         </button>
                         <button 
-                          *ngIf="operation.status !== 'Pendiente'"
+                          *ngIf="operation.status !== 'Pendiente' && operation.status !== 'Completada'"
                           mat-icon-button 
                           color="primary" 
                           (click)="relaunchOperation(operation)" 
@@ -409,6 +411,23 @@
                       <td mat-cell *matCellDef="let company"> {{company.numberOfAgents}} </td>
                     </ng-container>
 
+                    <!-- OperationsUsage Column -->
+                    <ng-container matColumnDef="operationsUsage">
+                      <th mat-header-cell *matHeaderCellDef class="operations-usage-column"> Operaciones (Mes Actual) </th>
+                      <td mat-cell *matCellDef="let company" class="operations-usage-cell">
+                        <div class="usage-info">
+                          <span class="usage-fraction">{{ company.currentMonthOperationsCount || 0 }} / {{ company.hasUnlimitedOperations ? '∞' : (company.maxMonthlyOperations || 0) }}</span>
+                          <mat-icon 
+                            *ngIf="!company.hasUnlimitedOperations && company.hasReachedMonthlyLimit" 
+                            color="warn" 
+                            matTooltip="Límite alcanzado"
+                            class="warning-icon">
+                            warning
+                          </mat-icon>
+                        </div>
+                      </td>
+                    </ng-container>
+
                     <!-- CreatedAt Column -->
                     <ng-container matColumnDef="createdAt">
                       <th mat-header-cell *matHeaderCellDef> Fecha Creación </th>
@@ -442,22 +461,68 @@
             </mat-card>
           </mat-tab>
 
-          <!-- Pestaña de Integraciones (solo para Superusuario) -->
-          <mat-tab label="Integraciones" *ngIf="currentUser?.role === Role.Superusuario">
+          <!-- Pestaña de Configuración (solo para Superusuario) -->
+          <mat-tab label="Configuración" *ngIf="currentUser?.role === Role.Superusuario">
             <mat-card class="integrations-card">
               <mat-card-header>
                 <mat-card-title>
-                  Integraciones de {{ currentUser?.companyName }}
+                  Configuración de {{ currentUser?.companyName }}
                 </mat-card-title>
-                <button mat-icon-button (click)="loadIntegrations()" matTooltip="Recargar integraciones">
+                <button mat-icon-button (click)="loadIntegrations()" matTooltip="Recargar configuración">
                   <mat-icon>refresh</mat-icon>
                 </button>
               </mat-card-header>
-              <mat-card-content>
-                <!-- Spinner de carga -->
+              <mat-card-content>                
+                <!-- Sección de Consumo de Operaciones Mensuales -->
+                <div class="operations-usage-section" *ngIf="!isLoadingOperationsUsage && operationsUsage">
+                  <div class="usage-header">
+                    <mat-icon class="usage-icon">insert_chart</mat-icon>
+                    <h3>Consumo de Operaciones Mensuales</h3>
+                  </div>
+                  
+                  <div class="usage-stats">
+                    <div class="usage-stat">
+                      <span class="stat-label">Operaciones Usadas:</span>
+                      <span class="stat-value">{{ operationsUsage.currentMonthOperationsCount }}</span>
+                    </div>
+                    <div class="usage-stat">
+                      <span class="stat-label">Máximo Permitido:</span>
+                      <span class="stat-value">{{ operationsUsage.hasUnlimitedOperations ? 'Ilimitado' : operationsUsage.maxMonthlyOperations }}</span>
+                    </div>
+                    <div class="usage-stat" *ngIf="!operationsUsage.hasUnlimitedOperations">
+                      <span class="stat-label">Disponibles:</span>
+                      <span class="stat-value remaining">{{ operationsUsage.remainingOperations }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="usage-progress" *ngIf="!operationsUsage.hasUnlimitedOperations">
+                    <mat-progress-bar 
+                      mode="determinate" 
+                      [value]="operationsUsage.usagePercentage"
+                      [class.warning]="operationsUsage.usagePercentage >= 80 && operationsUsage.usagePercentage < 100"
+                      [class.danger]="operationsUsage.usagePercentage >= 100">
+                    </mat-progress-bar>
+                    <div class="usage-percentage">{{ operationsUsage.usagePercentage | number:'1.0-1' }}% consumido</div>
+                  </div>
+                  
+                  <div class="unlimited-badge" *ngIf="operationsUsage.hasUnlimitedOperations">
+                    <mat-chip color="accent">
+                      <mat-icon>all_inclusive</mat-icon>
+                      Operaciones Ilimitadas
+                    </mat-chip>
+                  </div>
+                  
+                  <div class="usage-alert" *ngIf="operationsUsage.hasReachedMonthlyLimit">
+                    <mat-icon color="warn">warning</mat-icon>
+                    <span>Has alcanzado el límite mensual de operaciones. Contacta con tu administrador para ampliar tu plan.</span>
+                  </div>
+                </div>
+                
+                <mat-divider style="margin: 24px 0;"></mat-divider>
+                                <!-- Spinner de carga -->
                 <div *ngIf="isLoadingIntegrations" class="spinner-container">
                   <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
-                  <p>Cargando integraciones...</p>
+                  <p>Cargando configuración...</p>
                 </div>
 
                 <!-- Mensaje de error -->
@@ -467,7 +532,7 @@
                   <button mat-stroked-button color="primary" (click)="loadIntegrations()">Reintentar</button>
                 </div>
 
-                <!-- Lista de integraciones -->
+                <!-- Servicios Externos -->
                 <div class="integrations-list" *ngIf="!isLoadingIntegrations && !integrationsError && integrations.length > 0">
                   <table mat-table [dataSource]="integrations" class="mat-elevation-z4 integrations-table">
                     <!-- Icon Column -->
@@ -543,7 +608,7 @@
                   <!-- Información adicional -->
                   <div class="integration-info">
                     <mat-icon>info</mat-icon>
-                    <p>Las integraciones permiten conectar el sistema con servicios externos para automatizar el almacenamiento y gestión de documentos firmados.</p>
+                    <p>Conecte el sistema con servicios externos para automatizar el almacenamiento y gestión de documentos firmados.</p>
                   </div>
                 </div>
               </mat-card-content>
@@ -677,9 +742,151 @@
   background-color: rgba(25, 118, 210, 0.1) !important;
 }
 
-/* ==================== ESTILOS PARA INTEGRACIONES ==================== */
+/* ==================== ESTILOS PARA CONFIGURACIÓN ==================== */
 .integrations-card {
   margin: 24px;
+}
+
+/* Estilos para la sección de consumo de operaciones - Diseño refinado */
+.operations-usage-section {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.usage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.usage-header .usage-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: #1976d2;
+}
+
+.usage-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #424242;
+}
+
+.usage-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.usage-stat {
+  background-color: #fafafa;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid #eeeeee;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-stat .stat-label {
+  font-size: 12px;
+  color: #757575;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.usage-stat .stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.usage-stat .stat-value.remaining {
+  color: #2e7d32;
+}
+
+.usage-progress {
+  margin-top: 16px;
+}
+
+.usage-progress mat-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.usage-progress mat-progress-bar::ng-deep .mdc-linear-progress__buffer {
+  background-color: #e0e0e0 !important;
+}
+
+.usage-progress mat-progress-bar::ng-deep .mdc-linear-progress__bar-inner {
+  background-color: #1976d2 !important;
+}
+
+.usage-progress mat-progress-bar.warning::ng-deep .mdc-linear-progress__bar-inner {
+  background-color: #f57c00 !important;
+}
+
+.usage-progress mat-progress-bar.danger::ng-deep .mdc-linear-progress__bar-inner {
+  background-color: #d32f2f !important;
+}
+
+.usage-percentage {
+  text-align: right;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #757575;
+}
+
+.unlimited-badge {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.unlimited-badge mat-chip {
+  font-size: 13px;
+  padding: 8px 16px;
+  font-weight: 500;
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+}
+
+.unlimited-badge mat-chip mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.usage-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  background-color: #ffebee;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 3px solid #d32f2f;
+  font-size: 13px;
+  color: #c62828;
+}
+
+.usage-alert mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #d32f2f;
 }
 
 .integrations-list {
@@ -818,6 +1025,36 @@
   font-size: 16px;
   margin-bottom: 24px;
   color: rgba(0, 0, 0, 0.6);
+}
+
+/* Estilos para la columna de operaciones en la tabla de empresas */
+.operations-usage-column {
+  text-align: center;
+  width: 200px;
+  min-width: 200px;
+}
+
+.operations-usage-cell {
+  text-align: center;
+}
+
+.operations-usage-cell .usage-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.operations-usage-cell .usage-fraction {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.operations-usage-cell .warning-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Responsive */

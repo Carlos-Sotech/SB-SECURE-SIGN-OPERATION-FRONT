@@ -25,6 +25,7 @@ import { AuthService } from '../../services/auth.service';
 import { OperationService } from '../../services/operation.service';
 import { SignatureService } from '../../services/signature.service';
 import { PartyService } from '../../services/party.service';
+import { CompanyService } from '../../services/company.service';
 import { Operation, OperationTypeEnum, OperationReadDto, OperationStatusEnum } from '../../models/operation.model';
 import { UserReadDto } from '../../models/user-read.dto';
 import { Role } from '../../models/role.enum';
@@ -109,6 +110,7 @@ export class OperationListComponent implements OnInit, OnDestroy, AfterViewInit 
     private operationService: OperationService,
     private signatureService: SignatureService,
     private partyService: PartyService,
+    private companyService: CompanyService,
     private snackBar: MatSnackBar,
     private router: Router,
     private dialog: MatDialog,
@@ -751,31 +753,60 @@ loadPendingOperationsByUser(userId: number) {
   }
 
   openCreateOperationDialog(): void {
-    const dialogRef = this.dialog.open(OperationFormComponent, {
-      width: '95vw',
-      maxWidth: '1400px',
-      height: '90vh',
-      maxHeight: '800px',
-      data: { operation: null, isEdit: false }
-    });
+    // Validar si la empresa puede crear operaciones
+    if (!this.currentUser?.companyId) {
+      this.snackBar.open('No se puede determinar la empresa del usuario', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.snackBar.open('Operación creada exitosamente', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
-        
-        // Recargar tanto las operaciones normales como las pendientes
-        console.log('🔍 Operation created successfully, reloading both normal and pending operations');
-        
-        // Si está en modo búsqueda, recargar resultados de búsqueda
-        if (this.isSearching) {
-          this.loadSearchResults();
-        } else {
-          // Recargar operaciones pendientes primero, luego operaciones normales
-          this.loadPendingOperations();
+    this.companyService.canCreateOperation(this.currentUser.companyId).subscribe({
+      next: (response: any) => {
+        if (!response.canCreate) {
+          this.snackBar.open('⚠️ Se ha alcanzado el límite de operaciones mensuales para su empresa', 'Cerrar', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+          return;
         }
+
+        // Si puede crear, abrir el diálogo
+        const dialogRef = this.dialog.open(OperationFormComponent, {
+          width: '95vw',
+          maxWidth: '1400px',
+          height: '90vh',
+          maxHeight: '800px',
+          data: { operation: null, isEdit: false }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+          if (result) {
+            this.snackBar.open('Operación creada exitosamente', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            
+            // Recargar tanto las operaciones normales como las pendientes
+            console.log('🔍 Operation created successfully, reloading both normal and pending operations');
+            
+            // Si está en modo búsqueda, recargar resultados de búsqueda
+            if (this.isSearching) {
+              this.loadSearchResults();
+            } else {
+              // Recargar operaciones pendientes primero, luego operaciones normales
+              this.loadPendingOperations();
+            }
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al verificar límite de operaciones:', error);
+        this.snackBar.open('Error al verificar límite de operaciones. Intente nuevamente.', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }

@@ -103,18 +103,18 @@
           </div>
           
           <!-- Visor de PDF con ngx-extended-pdf-viewer y overlay de áreas de firma -->
-          <div class="pdf-navigation-toolbar" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
-            <button mat-icon-button type="button" (click)="goToFirstPage()" [disabled]="currentPage <= 1" matTooltip="Primera página">
+          <div class="pdf-navigation-toolbar" *ngIf="pdfSrc && !isLoadingPdf" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px; touch-action: manipulation;">
+            <button mat-icon-button type="button" (click)="goToFirstPage()" (touchend)="onTouchFirstPage($event)" [disabled]="currentPage <= 1" matTooltip="Primera página">
               <mat-icon>first_page</mat-icon>
             </button>
-            <button mat-icon-button type="button" (click)="goToPreviousPage()" [disabled]="currentPage <= 1" matTooltip="Página anterior">
+            <button mat-icon-button type="button" (click)="goToPreviousPage()" (touchend)="onTouchPreviousPage($event)" [disabled]="currentPage <= 1" matTooltip="Página anterior">
               <mat-icon>chevron_left</mat-icon>
             </button>
             <span style="margin: 0 12px; font-weight: 500;">Página {{ currentPage }} de {{ totalPages }}</span>
-            <button mat-icon-button type="button" (click)="goToNextPage()" [disabled]="currentPage >= totalPages" matTooltip="Página siguiente">
+            <button mat-icon-button type="button" (click)="goToNextPage()" (touchend)="onTouchNextPage($event)" [disabled]="currentPage >= totalPages" matTooltip="Página siguiente">
               <mat-icon>chevron_right</mat-icon>
             </button>
-            <button mat-icon-button type="button" (click)="goToLastPage()" [disabled]="currentPage >= totalPages" matTooltip="Última página">
+            <button mat-icon-button type="button" (click)="goToLastPage()" (touchend)="onTouchLastPage($event)" [disabled]="currentPage >= totalPages" matTooltip="Última página">
               <mat-icon>last_page</mat-icon>
             </button>
           </div>
@@ -141,7 +141,7 @@
                 [showSecondaryToolbarButton]="false"
                 [showRotateButton]="false"
                 [showHandToolButton]="false"
-                [zoom]="'page-height'"
+                [zoom]="'page-fit'"
                 [scrollMode]="3"
                 [spread]="'off'"
                 [page]="currentPage"

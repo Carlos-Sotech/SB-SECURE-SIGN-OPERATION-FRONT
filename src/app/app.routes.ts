@@ -18,7 +18,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent }, // Olvido su contraseña
   { path: 'reset-password', component: ResetPasswordComponent },   // Restablecer contraseña
-  { path: 'user-list', component: UserListComponent, canActivate: [AuthGuard] },
+  { path: 'home', component: UserListComponent, canActivate: [AuthGuard] },
   { path: 'company-list', component: CompanyListComponent, canActivate: [AuthGuard] },
   { path: 'operation-list', component: OperationListComponent, canActivate: [AuthGuard] },
   { path: 'signature/:operationId', component: SignaturePageComponent, canActivate: [AuthGuard] },

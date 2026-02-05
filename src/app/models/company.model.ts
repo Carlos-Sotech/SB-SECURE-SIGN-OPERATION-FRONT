@@ -8,5 +8,11 @@ export interface Company {
   phoneNumber?: string;
   email?: string;
   numberOfAgents: number;
+  maxMonthlyOperations: number;
+  currentMonthOperationsCount: number;
+  lastResetYearMonth: number;
   createdAt: string;
+  hasUnlimitedOperations?: boolean;
+  hasReachedMonthlyLimit?: boolean;
+  remainingOperations?: number;
 }

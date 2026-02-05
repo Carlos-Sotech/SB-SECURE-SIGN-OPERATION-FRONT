@@ -328,8 +328,8 @@ export class PartyFormComponent implements OnInit {
               const currentUrl = this.router.url;
               let origin = 'operation-list'; // Default origin
               
-              if (currentUrl.includes('/user-list')) {
-                origin = 'user-list';
+              if (currentUrl.includes('/home')) {
+                origin = 'home';
               } else if (currentUrl.includes('/operation-list')) {
                 origin = 'operation-list';
               }

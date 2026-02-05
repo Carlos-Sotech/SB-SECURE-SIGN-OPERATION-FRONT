@@ -76,7 +76,6 @@ export interface UserEditDialogData {
               El rol es requerido
             </mat-error>
             <mat-hint *ngIf="isAdminUser">No se puede cambiar el rol de un administrador</mat-hint>
-            <mat-hint *ngIf="!isAdminUser">Solo se pueden crear administradores, no cambiar usuarios existentes a administradores</mat-hint>
           </mat-form-field>
 
           <!-- Empresa (solo si se puede editar) -->
@@ -97,7 +96,7 @@ export interface UserEditDialogData {
           <mat-form-field appearance="outline" class="full-width" *ngIf="!canEditCompany && data.user.companyName">
             <mat-label>Empresa actual</mat-label>
             <input matInput [value]="data.user.companyName" readonly>
-            <mat-hint>No se puede cambiar porque el usuario tiene operaciones registradas</mat-hint>
+            <mat-hint>{{ getCompanyHint() }}</mat-hint>
           </mat-form-field>
         </form>
       </mat-dialog-content>
@@ -334,6 +333,14 @@ export class UserEditFormComponent implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close({ success: false });
+  }
+
+  getCompanyHint(): string {
+    // Verificar si el que edita es un superusuario
+    if (this.data.currentUser?.role === Role.Superusuario) {
+      return 'Solo un administrador puede cambiar la empresa de un usuario';
+    }
+    return 'No se puede cambiar porque el usuario tiene operaciones registradas';
   }
 
   private validateCompanyAgentLimit(companyId: number, username: string, email: string, role: string): void {

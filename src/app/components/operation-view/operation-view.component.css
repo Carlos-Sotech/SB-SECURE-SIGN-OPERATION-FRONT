@@ -302,37 +302,64 @@
 .pdf-viewer ::ng-deep .pdfViewer {
   touch-action: pan-y;
 }
+
+/* Estilo del contenedor PDF igual que operation-form */
 .pdf-viewer-container {
-  position: relative !important;
-  width: 100%;
-  min-height: 400px !important;
-  height: 85vh !important;
-  max-height: 85vh !important;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  margin: 0 auto;
-  padding-bottom: 0 !important;
-  box-sizing: border-box;
+  position: relative;
+  width: 700px !important;
+  min-width: 700px;
+  max-width: 700px;
+  height: auto;
+  margin: 20px auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: visible;
+  display: block;
 }
 
-/* Asegurar que el contenido del PDF se adapte a su altura real */
-::ng-deep .pdf-viewer #viewerContainer {
-  height: 100% !important;
-  min-height: 400px !important;
+.pdf-viewer-container ::ng-deep ngx-extended-pdf-viewer {
   width: 100% !important;
-  padding-bottom: 0 !important;
-  box-sizing: border-box !important;
-  overflow-y: auto !important;
+  height: 100%;
+  display: block;
 }
 
-/* Ajustar el contenedor principal del PDF para adaptarse al contenido */
-::ng-deep .pdf-viewer #mainContainer {
+.pdf-viewer-container ::ng-deep #outerContainer {
   width: 100% !important;
-  margin-left: 0 !important;
-  height: auto !important;
-  min-height: auto !important;
-  box-sizing: border-box !important;
+  height: 100%;
+  overflow: hidden !important;
+}
+
+.pdf-viewer-container ::ng-deep #mainContainer {
+  width: 100% !important;
+  height: 100%;
+}
+
+.pdf-viewer-container ::ng-deep #viewerContainer {
+  overflow: hidden !important;
+  width: 100% !important;
+  height: auto;
+}
+
+/* Asegurar que todos los botones funcionen */
+.pdf-viewer-container ::ng-deep button,
+.pdf-viewer-container ::ng-deep .toolbarButton,
+.pdf-viewer-container ::ng-deep input,
+.pdf-viewer-container ::ng-deep select {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Ocultar botones de edición */
+.pdf-viewer-container ::ng-deep #editorModeButtons,
+.pdf-viewer-container ::ng-deep #editorHighlight,
+.pdf-viewer-container ::ng-deep #editorFreeText,
+.pdf-viewer-container ::ng-deep #editorInk,
+.pdf-viewer-container ::ng-deep #editorStamp,
+.pdf-viewer-container ::ng-deep .editorParamsToolbarContainer,
+.pdf-viewer-container ::ng-deep #openFile,
+.pdf-viewer-container ::ng-deep button[title*="Abrir"],
+.pdf-viewer-container ::ng-deep button[title*="Open"] {
+  display: none !important;
 }
 
 /* Asegurar que las páginas del PDF tengan margen inferior mínimo */
@@ -344,7 +371,7 @@
 /* Ajustar el contenedor del PDF viewer para adaptarse al contenido */
 ::ng-deep .pdf-viewer {
   height: 100% !important;
-  min-height: 400px !important;
+  min-height: 500px !important;
   width: 100% !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
@@ -444,7 +471,7 @@
 .pdf-viewer {
   width: 100%;
   height: 100%;
-  min-height: 400px;
+  min-height: 500px;
   border: none;
 }
 

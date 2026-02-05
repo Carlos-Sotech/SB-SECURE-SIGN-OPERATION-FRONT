@@ -72,6 +72,23 @@
                   <td mat-cell *matCellDef="let company" class="number-column"> {{company.numberOfAgents}} </td>
                 </ng-container>
 
+                <!-- OperationsUsage Column -->
+                <ng-container matColumnDef="operationsUsage">
+                  <th mat-header-cell *matHeaderCellDef class="operations-usage-column"> Operaciones (Mes Actual) </th>
+                  <td mat-cell *matCellDef="let company" class="operations-usage-cell">
+                    <div class="usage-info">
+                      <span class="usage-fraction">{{ company.currentMonthOperationsCount || 0 }} / {{ company.hasUnlimitedOperations ? '∞' : company.maxMonthlyOperations }}</span>
+                      <mat-icon 
+                        *ngIf="!company.hasUnlimitedOperations && company.hasReachedMonthlyLimit" 
+                        color="warn" 
+                        matTooltip="Límite alcanzado"
+                        class="warning-icon">
+                        warning
+                      </mat-icon>
+                    </div>
+                  </td>
+                </ng-container>
+
                 <!-- CreatedAt Column -->
                 <ng-container matColumnDef="createdAt">
                   <th mat-header-cell *matHeaderCellDef> Fecha Creación </th>

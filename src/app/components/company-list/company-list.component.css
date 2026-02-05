@@ -110,6 +110,35 @@
     margin-right: 8px;
 }
 
+/* Estilos para la columna de consumo de operaciones */
+.operations-usage-column {
+  text-align: center;
+  width: 200px;
+}
+
+.operations-usage-cell {
+  text-align: center;
+}
+
+.operations-usage-cell .usage-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.operations-usage-cell .usage-fraction {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.operations-usage-cell .warning-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .admin-sidenav {

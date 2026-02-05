@@ -49,7 +49,7 @@ export const environment = {
   protocolo_sss: window?.env?.SOTECH_PROTOCOLO_SSS || 'http',
   nombre_servidor_sss: window?.env?.SOTECH_NOMBRE_SERVIDOR_SSS || 'localhost',
   puerto_sss: window?.env?.SOTECH_PUERTO_SSS || '',
-  aplicacion_sss: "",
+  aplicacion_sss: window?.env?.SOTECH_APLICACION_SSS || '',
   protocolo_ssls: window?.env?.SOTECH_PROTOCOLO_SSLS || 'http',
   nombre_servidor_ssls: window?.env?.SOTECH_NOMBRE_SERVIDOR_SSLS || 'localhost',
   puerto_ssls: window?.env?.SOTECH_PUERTO_SSLS || '',

@@ -8,7 +8,25 @@ export interface CompanyReadDto {
   phoneNumber?: string;
   email?: string;
   numberOfAgents: number;
+  maxMonthlyOperations: number;
+  currentMonthOperationsCount: number;
+  lastResetYearMonth: number;
   createdAt: string;
+  hasUnlimitedOperations?: boolean;
+  hasReachedMonthlyLimit?: boolean;
+  remainingOperations?: number;
+}
+
+export interface CompanyOperationsUsageDto {
+  companyId: number;
+  companyName: string;
+  maxMonthlyOperations: number;
+  currentMonthOperationsCount: number;
+  remainingOperations: number;
+  hasUnlimitedOperations: boolean;
+  hasReachedMonthlyLimit: boolean;
+  currentYearMonth: number;
+  usagePercentage: number;
 }
 
 
